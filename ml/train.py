@@ -16,6 +16,7 @@ from tensorflow.keras import layers, models, callbacks
 from sklearn.utils.class_weight import compute_class_weight
 
 from preprocess import normalize, augment_sequence, signer_wise_split
+from models import get_model, build_bilstm_model
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ def load_dataset(processed_dir: str, classes_file: str) -> Tuple[np.ndarray, np.
     return np.array(sequences, dtype=np.float32), np.array(labels, dtype=np.int32), classes
 
 
-def train(data_dir: str, classes_path: str, output_model: str = "isl_model.keras", epochs: int = 100, batch_size: int = 32):
+def train(data_dir: str, classes_path: str, output_model: str = "isl_model.keras", epochs: int = 100, batch_size: int = 32, arch: str = "bilstm"):
     """Main model training routine."""
     logger.info(f"Loading data from {data_dir} and classes from {classes_path}...")
     X, y, classes = load_dataset(data_dir, classes_path)
@@ -107,7 +108,7 @@ def train(data_dir: str, classes_path: str, output_model: str = "isl_model.keras
 
     logger.info(f"Train split: {len(X_train)}, Val split: {len(X_val)}, Test split: {len(X_test)}")
 
-    model = build_bilstm_model(seq_len=30, feat_dim=258, num_classes=num_classes)
+    model = get_model(arch=arch, seq_len=30, feat_dim=258, num_classes=num_classes)
     model.summary(print_fn=logger.info)
 
     os.makedirs(os.path.dirname(output_model) or ".", exist_ok=True)
@@ -152,6 +153,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, default="isl_model.keras", help="Path to save trained model")
     parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
+    parser.add_argument("--arch", type=str, default="bilstm", choices=["bilstm", "cnn_bilstm", "transformer"], help="Model architecture")
     args = parser.parse_args()
 
-    train(args.data, args.classes, output_model=args.output, epochs=args.epochs, batch_size=args.batch_size)
+    train(args.data, args.classes, output_model=args.output, epochs=args.epochs, batch_size=args.batch_size, arch=args.arch)
