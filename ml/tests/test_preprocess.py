@@ -166,6 +166,80 @@ class TestMLPreprocessing(unittest.TestCase):
         self.assertEqual(vel[0], [0.0] * 10)
         self.assertEqual(vel[1], [2.0] * 10)
 
+    def test_normalize_zero_shoulder_distance(self):
+        """Edge case: shoulders are at identical coordinates (scale = 0 + 1e-6 epsilon)."""
+        seq = [[0.0] * self.feat_dim for _ in range(self.seq_len)]
+        for f in range(self.seq_len):
+            # Identical left and right shoulder coordinates
+            seq[f][44], seq[f][45], seq[f][46] = 0.5, 0.5, 0.5
+            seq[f][48], seq[f][49], seq[f][50] = 0.5, 0.5, 0.5
+        norm = normalize(seq)
+        for f in range(self.seq_len):
+            for c in range(self.feat_dim):
+                val = norm[f][c]
+                self.assertFalse(math.isnan(val), f"NaN at frame {f}, dim {c}")
+                self.assertFalse(math.isinf(val), f"Inf at frame {f}, dim {c}")
+
+    def test_normalize_all_landmarks_zero(self):
+        """Edge case: completely black/undetected frame where all 258 landmarks are 0.0."""
+        zero_seq = [[0.0] * self.feat_dim for _ in range(self.seq_len)]
+        norm = normalize(zero_seq)
+        for f in range(self.seq_len):
+            for c in range(self.feat_dim):
+                val = norm[f][c]
+                self.assertFalse(math.isnan(val))
+                self.assertFalse(math.isinf(val))
+            # Absent hands must remain strictly 0.0
+            for idx in range(132, 258):
+                self.assertEqual(norm[f][idx], 0.0)
+
+    def test_normalize_both_hands_missing(self):
+        """Edge case: pose is valid but both left and right hands are missing (0.0)."""
+        seq = [[0.0] * self.feat_dim for _ in range(self.seq_len)]
+        for f in range(self.seq_len):
+            seq[f][44], seq[f][45], seq[f][46] = 0.6, 0.4, 0.0
+            seq[f][48], seq[f][49], seq[f][50] = 0.4, 0.4, 0.0
+        norm = normalize(seq)
+        for f in range(self.seq_len):
+            for idx in range(132, 258):
+                self.assertEqual(norm[f][idx], 0.0)
+
+    def test_normalize_right_hand_only(self):
+        """Edge case: left hand absent, right hand present."""
+        seq = [[0.0] * self.feat_dim for _ in range(self.seq_len)]
+        for f in range(self.seq_len):
+            seq[f][44], seq[f][45], seq[f][46] = 0.6, 0.4, 0.0
+            seq[f][48], seq[f][49], seq[f][50] = 0.4, 0.4, 0.0
+            # Right hand wrist at idx 195: present
+            seq[f][195], seq[f][196], seq[f][197] = 0.4, 0.6, 0.2
+        norm = normalize(seq)
+        for f in range(self.seq_len):
+            # Left hand (132..194) must remain strictly 0.0
+            for idx in range(132, 195):
+                self.assertEqual(norm[f][idx], 0.0)
+            # Right hand (195..197) must be normalized
+            self.assertNotEqual(norm[f][195], 0.0)
+
+    def test_normalize_variable_sequence_lengths(self):
+        """Verifies normalization handles arbitrary valid sequence lengths (T=1, T=15, T=45)."""
+        for t in [1, 15, 45]:
+            seq = [[0.0] * self.feat_dim for _ in range(t)]
+            for f in range(t):
+                seq[f][44], seq[f][45], seq[f][46] = 0.6, 0.4, 0.0
+                seq[f][48], seq[f][49], seq[f][50] = 0.4, 0.4, 0.0
+            norm = normalize(seq)
+            self.assertEqual(len(norm), t)
+            self.assertEqual(len(norm[0]), self.feat_dim)
+
+    def test_normalize_invalid_inputs(self):
+        """Verifies that invalid input shapes and empty sequences raise appropriate errors."""
+        with self.assertRaises((ValueError, TypeError)):
+            normalize([])
+        with self.assertRaises((ValueError, TypeError)):
+            normalize(None)
+        with self.assertRaises((ValueError, TypeError)):
+            normalize([[0.0] * 100])  # Invalid dimension (100 != 258)
+
 
 if __name__ == "__main__":
     unittest.main()
