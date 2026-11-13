@@ -11,11 +11,11 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import settings
-from gloss_to_text import glosses_to_sentence
-from schemas import SentenceRequest, SentenceResponse
-from translate import translate_text
-from tts import get_speech_audio
+from .config import settings
+from .gloss_to_text import glosses_to_sentence
+from .schemas import SentenceRequest, SentenceResponse
+from .translate import translate_text
+from .tts import get_speech_audio
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -84,4 +84,4 @@ async def process_sentence(payload: SentenceRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
