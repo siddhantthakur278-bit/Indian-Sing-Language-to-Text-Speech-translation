@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" width="100%" height="100%">
+  <defs>
+    <linearGradient id="winBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0b1324"/>
+      <stop offset="100%" stop-color="#14213d"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Window Frame -->
+  <rect width="1000" height="640" rx="14" fill="#0f172a" filter="url(#shadow)"/>
+  <rect x="1" y="1" width="998" height="638" rx="13" fill="none" stroke="#334155" stroke-width="2"/>
+
+  <!-- Window Header / Browser Chrome -->
+  <path d="M0,14 C0,6 6,0 14,0 L986,0 C994,0 1000,6 1000,14 L1000,42 L0,42 Z" fill="#1e293b"/>
+  <!-- Window buttons -->
+  <circle cx="24" cy="21" r="6" fill="#ef4444"/>
+  <circle cx="44" cy="21" r="6" fill="#f59e0b"/>
+  <circle cx="64" cy="21" r="6" fill="#10b981"/>
+
+  <!-- URL Bar -->
+  <rect x="180" y="8" width="640" height="26" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="500" y="25" fill="#94a3b8" font-family="monospace" font-size="11" text-anchor="middle">
+    https://isl-translator.vercel.app
+  </text>
+
+  <!-- App Header Bar -->
+  <g transform="translate(0, 42)">
+    <rect width="1000" height="52" fill="#14213d" stroke="#1f2f54" stroke-width="1"/>
+    <!-- App Logo & Title -->
+    <text x="30" y="32" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="18" font-weight="800">
+      ISL Translator
+    </text>
+    <!-- Live Badge -->
+    <rect x="160" y="17" width="55" height="20" rx="10" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="1"/>
+    <circle cx="172" cy="27" r="3.5" fill="#10b981"/>
+    <text x="182" y="31" fill="#34d399" font-family="sans-serif" font-size="11" font-weight="700">Live</text>
+
+    <!-- Header Actions (Right) -->
+    <!-- Language Selector Dropdown -->
+    <rect x="740" y="12" width="145" height="30" rx="8" fill="#1f2f54" stroke="#334155" stroke-width="1"/>
+    <text x="755" y="31" fill="#e2e8f0" font-family="sans-serif" font-size="12" font-weight="600">Language: Hindi v</text>
+
+    <!-- SOS Emergency Button -->
+    <rect x="900" y="12" width="70" height="30" rx="8" fill="#d62839"/>
+    <text x="935" y="31" fill="#ffffff" font-family="sans-serif" font-size="12" font-weight="800" text-anchor="middle">SOS</text>
+  </g>
+
+  <!-- Main Workspace -->
+  <g transform="translate(30, 115)">
+    <!-- Left Column: Camera View (470 x 360) -->
+    <g>
+      <rect width="470" height="360" rx="12" fill="#080e1a" stroke="#1f2f54" stroke-width="1.5"/>
+
+      <!-- Top Overlay: REC Tag & FPS -->
+      <rect x="15" y="15" width="180" height="26" rx="6" fill="#000000" fill-opacity="0.6"/>
+      <circle cx="28" cy="28" r="4" fill="#ef4444"/>
+      <text x="38" y="32" fill="#10b981" font-family="sans-serif" font-size="11" font-weight="700">
+        Hands detected 30 fps
+      </text>
+
+      <!-- Active Recognized Sign Chip -->
+      <rect x="310" y="15" width="145" height="28" rx="8" fill="#0fa3b1"/>
+      <text x="382" y="33" fill="#080e1a" font-family="sans-serif" font-size="12" font-weight="800" text-anchor="middle">
+        Sign: HELLO 94%
+      </text>
+
+      <!-- MediaPipe Skeleton Wireframe Simulation -->
+      <g transform="translate(235, 200)">
+        <!-- Head Silhouette -->
+        <circle cx="0" cy="-60" r="32" fill="none" stroke="#2a9d8f" stroke-width="2" stroke-dasharray="3,3"/>
+        <!-- Shoulders -->
+        <circle cx="-55" cy="0" r="5" fill="#f77f00"/> <!-- Left shoulder -->
+        <circle cx="55" cy="0" r="5" fill="#f77f00"/>  <!-- Right shoulder -->
+        <line x1="-55" y1="0" x2="55" y2="0" stroke="#0fa3b1" stroke-width="3"/>
+
+        <!-- Spine -->
+        <line x1="0" y1="0" x2="0" y2="90" stroke="#0fa3b1" stroke-width="3"/>
+
+        <!-- Left Arm & Hand Raised -->
+        <line x1="-55" y1="0" x2="-80" y2="-40" stroke="#0fa3b1" stroke-width="2.5"/>
+        <line x1="-80" y1="-40" x2="-90" y2="-80" stroke="#0fa3b1" stroke-width="2.5"/>
+        <circle cx="-90" cy="-80" r="5" fill="#fcbf49"/>
+        <!-- Hand Points -->
+        <circle cx="-100" cy="-110" r="3.5" fill="#48cae4"/>
+        <circle cx="-90" cy="-120" r="3.5" fill="#48cae4"/>
+        <circle cx="-80" cy="-115" r="3.5" fill="#48cae4"/>
+        <circle cx="-70" cy="-105" r="3.5" fill="#48cae4"/>
+
+        <!-- Right Arm & Hand Raised -->
+        <line x1="55" y1="0" x2="80" y2="-40" stroke="#0fa3b1" stroke-width="2.5"/>
+        <line x1="80" y1="-40" x2="90" y2="-80" stroke="#0fa3b1" stroke-width="2.5"/>
+        <circle cx="90" cy="-80" r="5" fill="#fcbf49"/>
+        <!-- Hand Points -->
+        <circle cx="100" cy="-110" r="3.5" fill="#48cae4"/>
+        <circle cx="90" cy="-120" r="3.5" fill="#48cae4"/>
+        <circle cx="80" cy="-115" r="3.5" fill="#48cae4"/>
+        <circle cx="70" cy="-105" r="3.5" fill="#48cae4"/>
+      </g>
+
+      <!-- Bottom Hint -->
+      <rect x="15" y="320" width="220" height="24" rx="6" fill="#000000" fill-opacity="0.7"/>
+      <text x="25" y="336" fill="#cbd5e1" font-family="sans-serif" font-size="10">
+        Keep both hands + face in frame
+      </text>
+    </g>
+
+    <!-- Right Column: Translation & Captions (445 x 360) -->
+    <g transform="translate(495, 0)">
+      <rect width="445" height="360" rx="12" fill="#14213d" stroke="#1f2f54" stroke-width="1.5"/>
+
+      <!-- Section 1: Glosses Detected -->
+      <text x="25" y="35" fill="#94a3b8" font-family="sans-serif" font-size="11" font-weight="700" letter-spacing="1">
+        GLOSSES DETECTED
+      </text>
+      <!-- Gloss Chips -->
+      <g transform="translate(25, 48)">
+        <rect x="0" y="0" width="55" height="30" rx="8" fill="#1f2f54" stroke="#0fa3b1" stroke-width="1"/>
+        <text x="27" y="19" fill="#e2e8f0" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">ME</text>
+
+        <rect x="65" y="0" width="95" height="30" rx="8" fill="#1f2f54" stroke="#0fa3b1" stroke-width="1"/>
+        <text x="112" y="19" fill="#e2e8f0" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">HOSPITAL</text>
+
+        <rect x="170" y="0" width="55" height="30" rx="8" fill="#1f2f54" stroke="#0fa3b1" stroke-width="1"/>
+        <text x="197" y="19" fill="#e2e8f0" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">GO</text>
+      </g>
+
+      <!-- Section 2: English Natural Sentence -->
+      <text x="25" y="125" fill="#94a3b8" font-family="sans-serif" font-size="11" font-weight="700" letter-spacing="1">
+        SENTENCE (English)
+      </text>
+      <text x="25" y="155" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="21" font-weight="700">
+        I am going to the hospital.
+      </text>
+      <line x1="25" y1="172" x2="420" y2="172" stroke="#334155" stroke-width="1"/>
+
+      <!-- Section 3: Multilingual Translation -->
+      <text x="25" y="202" fill="#0fa3b1" font-family="sans-serif" font-size="11" font-weight="700" letter-spacing="1">
+        TRANSLATION (Hindi)
+      </text>
+      <text x="25" y="235" fill="#f77f00" font-family="'Noto Sans Devanagari', sans-serif" font-size="24" font-weight="700">
+        main aspatal ja raha hoon.
+      </text>
+      <text x="25" y="260" fill="#64748b" font-family="sans-serif" font-size="10" font-style="italic">
+        (shown in Devanagari: मैं अस्पताल जा रहा हूँ।)
+      </text>
+
+      <!-- Section 4: Action Buttons -->
+      <g transform="translate(25, 290)">
+        <!-- Speak Button -->
+        <rect x="0" y="0" width="180" height="46" rx="10" fill="#f77f00"/>
+        <text x="90" y="28" fill="#ffffff" font-family="sans-serif" font-size="15" font-weight="700" text-anchor="middle">
+          🔊 Speak
+        </text>
+
+        <!-- Clear Button -->
+        <rect x="195" y="0" width="120" height="46" rx="10" fill="#1f2f54" stroke="#334155" stroke-width="1"/>
+        <text x="255" y="28" fill="#e2e8f0" font-family="sans-serif" font-size="14" font-weight="600" text-anchor="middle">
+          Clear
+        </text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom Container: Translation History -->
+  <g transform="translate(30, 495)">
+    <rect width="940" height="115" rx="10" fill="#0b1324" stroke="#1f2f54" stroke-width="1"/>
+    <text x="20" y="24" fill="#94a3b8" font-family="sans-serif" font-size="11" font-weight="700" letter-spacing="1">
+      HISTORY LOG
+    </text>
+
+    <!-- History rows -->
+    <text x="20" y="48" fill="#94a3b8" font-family="monospace" font-size="11">12:01</text>
+    <text x="75" y="48" fill="#cbd5e1" font-family="sans-serif" font-size="12">Hello, how are you? (नमस्ते, आप कैसे हैं?)</text>
+
+    <text x="20" y="70" fill="#94a3b8" font-family="monospace" font-size="11">12:02</text>
+    <text x="75" y="70" fill="#f87171" font-family="sans-serif" font-size="12">Please help me. (कृपया मेरी मदद करें। - EMERGENCY)</text>
+
+    <text x="20" y="92" fill="#94a3b8" font-family="monospace" font-size="11">12:03</text>
+    <text x="75" y="92" fill="#cbd5e1" font-family="sans-serif" font-size="12">I am going to the hospital. (मैं अस्पताल जा रहा हूँ।)</text>
+  </g>
+</svg>

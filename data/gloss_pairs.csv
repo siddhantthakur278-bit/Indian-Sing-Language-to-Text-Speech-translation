@@ -1,0 +1,220 @@
+gloss_sequence,english_sentence,hindi_translation,marathi_translation,is_emergency
+HELP,Please help me.,कृपया मेरी मदद करें।,कृपया मला मदत करा.,true
+HELP ME,Please help me.,कृपया मेरी सहायता करें।,कृपया मला मदत करा.,true
+PAIN,I am in severe pain.,मुझे बहुत दर्द हो रहा है।,मला खूप वेदना होत आहेत.,true
+ME PAIN,I am experiencing pain.,मुझे दर्द हो रहा है।,मला त्रास होत आहे.,true
+HELP ME PAIN,"Please help me, I am in severe pain.","कृपया मेरी मदद करें, मुझे बहुत दर्द हो रहा है।","कृपया मला मदत करा, मला खूप वेदना होत आहेत.",true
+HOSPITAL GO NEED,I need to go to the hospital immediately.,मुझे तुरंत अस्पताल जाना है।,मला लगेच रुग्णालयात जाणे गरजेचे आहे.,true
+ME HOSPITAL GO,I am going to the hospital.,मैं अस्पताल जा रहा हूँ।,मी रुग्णालयात जात आहे.,true
+HELP ME HOSPITAL,"Please help me, I need to go to the hospital.","कृपया मेरी मदद करें, मुझे अस्पताल जाना है।","कृपया मला मदत करा, मला रुग्णालयात जाण्याची गरज आहे.",true
+DOCTOR CALL PLEASE,Please call a doctor immediately.,कृपया तुरंत डॉक्टर को बुलाएं।,कृपया लगेच डॉक्टरांना बोलवा.,true
+DOCTOR NEED,I need a doctor.,मुझे एक डॉक्टर की जरूरत है।,मला डॉक्टरची गरज आहे.,true
+AMBULANCE CALL PLEASE,Please call an ambulance.,कृपया एम्बुलेंस को कॉल करें।,कृपया रुग्णवाहिका बोलवा.,true
+POLICE CALL PLEASE,Please call the police immediately.,कृपया तुरंत पुलिस को बुलाएं।,कृपया लगेच पोलिसांना बोलवा.,true
+POLICE NEED,I need police assistance.,मुझे पुलिस की मदद चाहिए।,मला पोलिसांची मदत हवी आहे.,true
+FIRE HELP,Fire! Please help!,आग लगी है! कृपया मदद करें!,आग लागली आहे! कृपया मदत करा!,true
+FIRE CALL POLICE,"There is a fire, please call emergency services.","आग लगी है, कृपया आपातकालीन सेवा को बुलाएं।","आग लागली आहे, कृपया आपत्कालीन सेवांना बोलवा.",true
+ACCIDENT HELP,"There has been an accident, please help.","दुर्घटना हो गई है, कृपया मदद करें।","अपघात झाला आहे, कृपया मदत करा.",true
+ACCIDENT AMBULANCE CALL,"Accident occurred, please call an ambulance.","दुर्घटना हुई है, कृपया एम्बुलेंस बुलाएं।","अपघात झाला आहे, कृपया रुग्णवाहिका बोलवा.",true
+DANGER STOP,"Danger ahead, please stop!","आगे खतरा है, कृपया रुकें!","पुढे धोका आहे, कृपया थांबा!",true
+EMERGENCY HELP ME,Emergency! Please help me!,आपातकाल! कृपया मेरी सहायता करें!,आणीबाणी! कृपया मला मदत करा!,true
+MEDICINE NEED URGENT,I need urgent medicine.,मुझे तुरंत दवा चाहिए।,मला तातडीने औषध हवे आहे.,true
+WATER NEED PLEASE,"Please give me water, urgent.","कृपया मुझे पानी दें, तत्काल।","कृपया मला पाणी द्या, तातडीने.",true
+HELLO,Hello!,नमस्ते!,नमस्कार!,false
+HELLO HOW YOU,"Hello, how are you?","नमस्ते, आप कैसे हैं?","नमस्कार, तुम्ही कसे आहात?",false
+THANK_YOU,Thank you very much.,आपका बहुत धन्यवाद।,खूप खूप धन्यवाद.,false
+THANK_YOU HELP,Thank you for your help.,मदद के लिए धन्यवाद।,मदतीसाठी धन्यवाद.,false
+SORRY,I am really sorry.,मुझे बहुत खेद है।,मला माफ करा.,false
+PLEASE,Please.,कृपया।,कृपया.,false
+WELCOME,You are welcome.,आपका स्वागत है।,तुमचे स्वागत आहे.,false
+GOODBYE,"Goodbye, take care.","अलविदा, ध्यान रखें।","निरोप, काळजी घ्या.",false
+MEET YOU HAPPY,Nice to meet you.,आपसे मिलकर खुशी हुई।,तुम्हाला भेटून आनंद झाला.,false
+MORNING GOOD,Good morning.,शुभ प्रभात।,शुभ सकाळ.,false
+ME NAME WHAT,What is my name?,मेरा नाम क्या है?,माझे नाव काय आहे?,false
+YOU NAME WHAT,What is your name?,आपका नाम क्या है?,तुमचे नाव काय आहे?,false
+ME FRIEND HE_SHE,He/She is my friend.,वह मेरा दोस्त है।,तो/ती माझा मित्र आहे.,false
+HE_SHE WHO,Who is that person?,वह व्यक्ति कौन है?,ती व्यक्ती कोण आहे?,false
+WE FRIEND,We are friends.,हम दोस्त हैं।,आम्ही मित्र आहोत.,false
+MOTHER HOME,Mother is at home.,माँ घर पर हैं।,आई घरी आहे.,false
+FATHER WORK GO,Father is going to work.,पिताजी काम पर जा रहे हैं।,बाबा कामावर जात आहेत.,false
+TEACHER COME,The teacher has arrived.,शिक्षक आ गए हैं।,शिक्षक आले आहेत.,false
+DOCTOR WHERE,Where is the doctor?,डॉक्टर कहाँ हैं?,डॉक्टर कुठे आहेत?,false
+YOU WHERE GO,Where are you going?,आप कहाँ जा रहे हैं?,तुम्ही कुठे जात आहात?,false
+ME HOME GO,I am going home.,मैं घर जा रहा हूँ।,मी घरी जात आहे.,false
+ME SCHOOL GO,I am going to school.,मैं स्कूल जा रहा हूँ।,मी शाळेत जात आहे.,false
+ME WORK GO,I am going to work.,मैं काम पर जा रहा हूँ।,मी कामावर जात आहे.,false
+ME MARKET GO,I am going to the market.,मैं बाजार जा रहा हूँ।,मी बाजारात जात आहे.,false
+FOOD WANT,I want food.,मुझे खाना चाहिए।,मला जेवण हवे आहे.,false
+ME FOOD EAT WANT,I want to eat food.,मैं खाना खाना चाहता हूँ।,मला जेवायचे आहे.,false
+WATER DRINK WANT,I want to drink water.,मुझे पानी पीना है।,मला पाणी प्यायचे आहे.,false
+WATER PLEASE,"Water, please.",कृपया पानी दीजिए।,कृपया पाणी द्या.,false
+TOILET WHERE,Where is the toilet / washroom?,शौचालय कहाँ है?,शौचालय कुठे आहे?,false
+TOILET GO NEED,I need to use the washroom.,मुझे शौचालय जाना है।,मला शौचालयात जाण्याची गरज आहे.,false
+ME SLEEP WANT,I want to sleep.,मुझे सोना है।,मला झोपायचे आहे.,false
+TIME WHAT,What time is it?,कितना समय हुआ है?,किती वाजले आहेत?,false
+MONEY NEED,I need money.,मुझे पैसों की आवश्यकता है।,मला पैशांची गरज आहे.,false
+MONEY HOW_MUCH,How much money is it?,कितने पैसे हुए?,किती पैसे झाले?,false
+BUY WANT,I want to buy this.,मैं इसे खरीदना चाहता हूँ।,मला हे विकत घ्यायचे आहे.,false
+CLOTHES BUY WANT,I want to buy clothes.,मुझे कपड़े खरीदने हैं।,मला कपडे खरेदी करायचे आहेत.,false
+ME UNDERSTAND,I understand.,मैं समझ गया।,मला समजले.,false
+ME NOT UNDERSTAND,I do not understand.,मैं नहीं समझा।,मला समजले नाही.,false
+YOU UNDERSTAND,Did you understand?,क्या आप समझे?,तुम्हाला समजले का?,false
+ME KNOW,I know.,मुझे पता है।,मला माहित आहे.,false
+ME NOT KNOW,I do not know.,मुझे नहीं पता।,मला माहित नाही.,false
+PLEASE WAIT,Please wait a moment.,कृपया थोड़ा प्रतीक्षा करें।,कृपया थोडा वेळ थांबा.,false
+STOP PLEASE,Please stop here.,कृपया यहाँ रुकिए।,कृपया येथे थांबा.,false
+WRITE PLEASE,Please write it down.,कृपया इसे लिखकर बताएं।,कृपया लिहून दाखवा.,false
+SPEAK SLOW PLEASE,Please speak slowly.,कृपया धीरे बोलिए।,कृपया हळू बोला.,false
+REPEAT PLEASE,Please repeat once again.,कृपया एक बार फिर से दोहराएं।,कृपया पुन्हा एकदा सांगा.,false
+YOU SPEAK WHAT,What did you say?,आपने क्या कहा?,तुम्ही काय म्हणालात?,false
+ME DEAF,I am deaf.,मैं सुन नहीं सकता / बधिर हूँ।,मी कर्णबधिर आहे.,false
+ME SIGN SPEAK,I communicate through sign language.,मैं सांकेतिक भाषा में बात करता हूँ।,मी सांकेतिक भाषेत संवाद साधतो.,false
+WHERE GO,Where should I go?,कहाँ जाना है?,कुठे जायचे आहे?,false
+BUS STOP WHERE,Where is the bus stop?,बस स्टॉप कहाँ है?,बस थांबा कुठे आहे?,false
+TRAIN STATION WHERE,Where is the railway station?,रेलवे स्टेशन कहाँ है?,रेल्वे स्टेशन कुठे आहे?,false
+TICKET BUY WHERE,Where can I buy a ticket?,टिकट कहाँ से खरीदें?,तिकीट कुठून खरेदी करावी?,false
+HOW GO,How do I go there?,वहाँ कैसे जाएँ?,तेथे कसे जायचे?,false
+COME HERE PLEASE,Please come here.,कृपया यहाँ आइए।,कृपया येथे या.,false
+WAIT HERE,Please wait here.,यहाँ प्रतीक्षा करें।,येथे थांबा.,false
+FEVER ME,I have a fever.,मुझे बुखार है।,मला ताप आला आहे.,false
+HEAD PAIN,I have a headache.,मेरे सिर में दर्द है।,माझे डोके दुखत आहे.,false
+STOMACH PAIN,I have a stomach ache.,मेरे पेट में दर्द है।,माझे पोट दुखत आहे.,false
+MEDICINE WHERE BUY,Where can I buy medicine?,दवा कहाँ से खरीद सकते हैं?,औषधे कुठून मिळतील?,false
+MEDICINE EAT TIME,When should I take this medicine?,यह दवा कब लेनी है?,हे औषध कधी घ्यायचे?,false
+ONE WATER PLEASE,"One water bottle, please.","एक पानी की बोतल, कृपया।","एक पाण्याची बाटली, कृपया.",false
+TWO TICKET PLEASE,"Two tickets, please.","दो टिकट, कृपया।","दोन तिकिटे, कृपया.",false
+THREE TIME WAIT,Please wait for three minutes.,तीन मिनट प्रतीक्षा करें।,तीन मिनिटे थांबा.,false
+FIVE MONEY GIVE,Please give five rupees.,कृपया पांच रुपये दें।,कृपया पाच रुपये द्या.,false
+TEN TIME MEET,Let us meet at ten o clock.,दस बजे मिलते हैं।,दहा वाजता भेटूया.,false
+MOTHER HOSPITAL GO,Mother is going to the hospital.,माँ अस्पताल जा रहे हैं।,आई रुग्णालयात जात आहेत.,false
+MOTHER HOME GO,Mother is going home.,माँ घर जा रहे हैं।,आई घरी जात आहेत.,false
+MOTHER MARKET GO,Mother is going to the market.,माँ बाजार जा रहे हैं।,आई बाजारात जात आहेत.,false
+MOTHER SCHOOL GO,Mother is going to school.,माँ स्कूल जा रहे हैं।,आई शाळेत जात आहेत.,false
+MOTHER DOCTOR MEET WANT,Mother wants to meet the doctor.,माँ डॉक्टर से मिलना चाहते हैं।,आई डॉक्टरांना भेटू इच्छितात.,false
+MOTHER HELP NEED,Mother needs help.,माँ को मदद की जरूरत है।,आई यांना मदतीची गरज आहे.,false
+MOTHER CALL PLEASE,Please call mother.,कृपया माँ को बुलाएं।,कृपया आई यांना बोलवा.,false
+MOTHER WATER WANT,Mother wants water.,माँ को पानी चाहिए।,आई यांना पाणी हवे आहे.,false
+MOTHER FOOD WANT,Mother wants food.,माँ को खाना चाहिए।,आई यांना जेवण हवे आहे.,false
+MOTHER WHERE,Where is mother?,माँ कहाँ हैं?,आई कुठे आहेत?,false
+FATHER HOSPITAL GO,Father is going to the hospital.,पिताजी अस्पताल जा रहे हैं।,बाबा रुग्णालयात जात आहेत.,false
+FATHER HOME GO,Father is going home.,पिताजी घर जा रहे हैं।,बाबा घरी जात आहेत.,false
+FATHER MARKET GO,Father is going to the market.,पिताजी बाजार जा रहे हैं।,बाबा बाजारात जात आहेत.,false
+FATHER SCHOOL GO,Father is going to school.,पिताजी स्कूल जा रहे हैं।,बाबा शाळेत जात आहेत.,false
+FATHER DOCTOR MEET WANT,Father wants to meet the doctor.,पिताजी डॉक्टर से मिलना चाहते हैं।,बाबा डॉक्टरांना भेटू इच्छितात.,false
+FATHER HELP NEED,Father needs help.,पिताजी को मदद की जरूरत है।,बाबा यांना मदतीची गरज आहे.,false
+FATHER CALL PLEASE,Please call father.,कृपया पिताजी को बुलाएं।,कृपया बाबा यांना बोलवा.,false
+FATHER WATER WANT,Father wants water.,पिताजी को पानी चाहिए।,बाबा यांना पाणी हवे आहे.,false
+FATHER FOOD WANT,Father wants food.,पिताजी को खाना चाहिए।,बाबा यांना जेवण हवे आहे.,false
+FATHER WHERE,Where is father?,पिताजी कहाँ हैं?,बाबा कुठे आहेत?,false
+FRIEND HOSPITAL GO,My friend is going to the hospital.,मेरा दोस्त अस्पताल जा रहे हैं।,माझा मित्र रुग्णालयात जात आहेत.,false
+FRIEND HOME GO,My friend is going home.,मेरा दोस्त घर जा रहे हैं।,माझा मित्र घरी जात आहेत.,false
+FRIEND MARKET GO,My friend is going to the market.,मेरा दोस्त बाजार जा रहे हैं।,माझा मित्र बाजारात जात आहेत.,false
+FRIEND SCHOOL GO,My friend is going to school.,मेरा दोस्त स्कूल जा रहे हैं।,माझा मित्र शाळेत जात आहेत.,false
+FRIEND DOCTOR MEET WANT,My friend wants to meet the doctor.,मेरा दोस्त डॉक्टर से मिलना चाहते हैं।,माझा मित्र डॉक्टरांना भेटू इच्छितात.,false
+FRIEND HELP NEED,My friend needs help.,मेरा दोस्त को मदद की जरूरत है।,माझा मित्र यांना मदतीची गरज आहे.,false
+FRIEND CALL PLEASE,Please call my friend.,कृपया मेरा दोस्त को बुलाएं।,कृपया माझा मित्र यांना बोलवा.,false
+FRIEND WATER WANT,My friend wants water.,मेरा दोस्त को पानी चाहिए।,माझा मित्र यांना पाणी हवे आहे.,false
+FRIEND FOOD WANT,My friend wants food.,मेरा दोस्त को खाना चाहिए।,माझा मित्र यांना जेवण हवे आहे.,false
+FRIEND WHERE,Where is my friend?,मेरा दोस्त कहाँ हैं?,माझा मित्र कुठे आहेत?,false
+TEACHER HOSPITAL GO,The teacher is going to the hospital.,शिक्षक अस्पताल जा रहे हैं।,शिक्षक रुग्णालयात जात आहेत.,false
+TEACHER HOME GO,The teacher is going home.,शिक्षक घर जा रहे हैं।,शिक्षक घरी जात आहेत.,false
+TEACHER MARKET GO,The teacher is going to the market.,शिक्षक बाजार जा रहे हैं।,शिक्षक बाजारात जात आहेत.,false
+TEACHER SCHOOL GO,The teacher is going to school.,शिक्षक स्कूल जा रहे हैं।,शिक्षक शाळेत जात आहेत.,false
+TEACHER DOCTOR MEET WANT,The teacher wants to meet the doctor.,शिक्षक डॉक्टर से मिलना चाहते हैं।,शिक्षक डॉक्टरांना भेटू इच्छितात.,false
+TEACHER HELP NEED,The teacher needs help.,शिक्षक को मदद की जरूरत है।,शिक्षक यांना मदतीची गरज आहे.,false
+TEACHER CALL PLEASE,Please call the teacher.,कृपया शिक्षक को बुलाएं।,कृपया शिक्षक यांना बोलवा.,false
+TEACHER WATER WANT,The teacher wants water.,शिक्षक को पानी चाहिए।,शिक्षक यांना पाणी हवे आहे.,false
+TEACHER FOOD WANT,The teacher wants food.,शिक्षक को खाना चाहिए।,शिक्षक यांना जेवण हवे आहे.,false
+TEACHER WHERE,Where is the teacher?,शिक्षक कहाँ हैं?,शिक्षक कुठे आहेत?,false
+DOCTOR HOSPITAL GO,The doctor is going to the hospital.,डॉक्टर अस्पताल जा रहे हैं।,डॉक्टर रुग्णालयात जात आहेत.,false
+DOCTOR HOME GO,The doctor is going home.,डॉक्टर घर जा रहे हैं।,डॉक्टर घरी जात आहेत.,false
+DOCTOR MARKET GO,The doctor is going to the market.,डॉक्टर बाजार जा रहे हैं।,डॉक्टर बाजारात जात आहेत.,false
+DOCTOR SCHOOL GO,The doctor is going to school.,डॉक्टर स्कूल जा रहे हैं।,डॉक्टर शाळेत जात आहेत.,false
+DOCTOR DOCTOR MEET WANT,The doctor wants to meet the doctor.,डॉक्टर डॉक्टर से मिलना चाहते हैं।,डॉक्टर डॉक्टरांना भेटू इच्छितात.,false
+DOCTOR HELP NEED,The doctor needs help.,डॉक्टर को मदद की जरूरत है।,डॉक्टर यांना मदतीची गरज आहे.,false
+DOCTOR CALL PLEASE,Please call the doctor.,कृपया डॉक्टर को बुलाएं।,कृपया डॉक्टर यांना बोलवा.,false
+DOCTOR WATER WANT,The doctor wants water.,डॉक्टर को पानी चाहिए।,डॉक्टर यांना पाणी हवे आहे.,false
+DOCTOR FOOD WANT,The doctor wants food.,डॉक्टर को खाना चाहिए।,डॉक्टर यांना जेवण हवे आहे.,false
+DOCTOR WHERE,Where is the doctor?,डॉक्टर कहाँ हैं?,डॉक्टर कुठे आहेत?,false
+WHAT YOU WANT,What do you want?,आप क्या चाहते हैं?,तुम्हाला काय हवे आहे?,false
+WHERE YOU GO,Where are you going?,आप कहाँ जा रहे हैं?,तुम्ही कुठे जात आहात?,false
+WHEN YOU COME,When will you come?,आप कब आएंगे?,तुम्ही कधी येणार?,false
+WHO COME,Who is coming?,कौन आ रहा है?,कोण येत आहे?,false
+WHY YOU GO,Why are you going?,आप क्यों जा रहे हैं?,तुम्ही का जात आहात?,false
+HOW WORK DO,How do I do this work?,यह काम कैसे करें?,हे काम कसे करावे?,false
+WHAT TIME MEET,What time will we meet?,हम कितने बजे मिलेंगे?,आपण किती वाजता भेटूया?,false
+WHERE WATER,Where is water available?,पानी कहाँ मिलेगा?,पाणी कुठे मिळेल?,false
+WHERE FOOD,Where can I find food?,खाना कहाँ मिलेगा?,जेवण कुठे मिळेल?,false
+WHERE MEDICINE,Where are the medicines?,दवाइयाँ कहाँ हैं?,औषधे कुठे आहेत?,false
+WHO POLICE CALL,Who called the police?,पुलिस को किसने बुलाया?,पोलिसांना कोणी बोलावले?,false
+WHAT HAPPEN,What happened here?,यहाँ क्या हुआ?,येथे काय झाले?,false
+ONE WATER NEED,I need one bottle(s) of water.,मुझे एक पानी की बोतल चाहिए।,मला एक पाण्याची बाटली हवी आहे.,false
+ONE TIME WAIT,Please wait for one minutes.,कृपया एक मिनट प्रतीक्षा करें।,कृपया एक मिनिटे थांबा.,false
+ONE PEOPLE COME,One people are coming.,एक लोग आ रहे हैं।,एक लोक येत आहेत.,false
+TWO WATER NEED,I need two bottle(s) of water.,मुझे दो पानी की बोतल चाहिए।,मला दोन पाण्याची बाटली हवी आहे.,false
+TWO TIME WAIT,Please wait for two minutes.,कृपया दो मिनट प्रतीक्षा करें।,कृपया दोन मिनिटे थांबा.,false
+TWO PEOPLE COME,Two people are coming.,दो लोग आ रहे हैं।,दोन लोक येत आहेत.,false
+THREE WATER NEED,I need three bottle(s) of water.,मुझे तीन पानी की बोतल चाहिए।,मला तीन पाण्याची बाटली हवी आहे.,false
+THREE TIME WAIT,Please wait for three minutes.,कृपया तीन मिनट प्रतीक्षा करें।,कृपया तीन मिनिटे थांबा.,false
+THREE PEOPLE COME,Three people are coming.,तीन लोग आ रहे हैं।,तीन लोक येत आहेत.,false
+FOUR WATER NEED,I need four bottle(s) of water.,मुझे चार पानी की बोतल चाहिए।,मला चार पाण्याची बाटली हवी आहे.,false
+FOUR TIME WAIT,Please wait for four minutes.,कृपया चार मिनट प्रतीक्षा करें।,कृपया चार मिनिटे थांबा.,false
+FOUR PEOPLE COME,Four people are coming.,चार लोग आ रहे हैं।,चार लोक येत आहेत.,false
+FIVE WATER NEED,I need five bottle(s) of water.,मुझे पाँच पानी की बोतल चाहिए।,मला पाच पाण्याची बाटली हवी आहे.,false
+FIVE TIME WAIT,Please wait for five minutes.,कृपया पाँच मिनट प्रतीक्षा करें।,कृपया पाच मिनिटे थांबा.,false
+FIVE PEOPLE COME,Five people are coming.,पाँच लोग आ रहे हैं।,पाच लोक येत आहेत.,false
+SIX WATER NEED,I need six bottle(s) of water.,मुझे छह पानी की बोतल चाहिए।,मला सहा पाण्याची बाटली हवी आहे.,false
+SIX TIME WAIT,Please wait for six minutes.,कृपया छह मिनट प्रतीक्षा करें।,कृपया सहा मिनिटे थांबा.,false
+SIX PEOPLE COME,Six people are coming.,छह लोग आ रहे हैं।,सहा लोक येत आहेत.,false
+SEVEN WATER NEED,I need seven bottle(s) of water.,मुझे सात पानी की बोतल चाहिए।,मला सात पाण्याची बाटली हवी आहे.,false
+SEVEN TIME WAIT,Please wait for seven minutes.,कृपया सात मिनट प्रतीक्षा करें।,कृपया सात मिनिटे थांबा.,false
+SEVEN PEOPLE COME,Seven people are coming.,सात लोग आ रहे हैं।,सात लोक येत आहेत.,false
+EIGHT WATER NEED,I need eight bottle(s) of water.,मुझे आठ पानी की बोतल चाहिए।,मला आठ पाण्याची बाटली हवी आहे.,false
+EIGHT TIME WAIT,Please wait for eight minutes.,कृपया आठ मिनट प्रतीक्षा करें।,कृपया आठ मिनिटे थांबा.,false
+EIGHT PEOPLE COME,Eight people are coming.,आठ लोग आ रहे हैं।,आठ लोक येत आहेत.,false
+NINE WATER NEED,I need nine bottle(s) of water.,मुझे नौ पानी की बोतल चाहिए।,मला नऊ पाण्याची बाटली हवी आहे.,false
+NINE TIME WAIT,Please wait for nine minutes.,कृपया नौ मिनट प्रतीक्षा करें।,कृपया नऊ मिनिटे थांबा.,false
+NINE PEOPLE COME,Nine people are coming.,नौ लोग आ रहे हैं।,नऊ लोक येत आहेत.,false
+TEN WATER NEED,I need ten bottle(s) of water.,मुझे दस पानी की बोतल चाहिए।,मला दहा पाण्याची बाटली हवी आहे.,false
+TEN TIME WAIT,Please wait for ten minutes.,कृपया दस मिनट प्रतीक्षा करें।,कृपया दहा मिनिटे थांबा.,false
+TEN PEOPLE COME,Ten people are coming.,दस लोग आ रहे हैं।,दहा लोक येत आहेत.,false
+ME WATER DRINK WANT,I want to drink water.,मैं पानी पीना चाहता हूँ।,मला पाणी प्यायचे आहे.,false
+YOU MEDICINE EAT FINISH,Did you take your medicine?,क्या आपने दवा ले ली?,तुम्ही औषध घेतले का?,false
+DOCTOR COME WHEN,When will the doctor come?,डॉक्टर कब आएंगे?,डॉक्टर कधी येणार?,false
+HOSPITAL ROOM WHERE,Where is the hospital room?,अस्पताल का कमरा कहाँ है?,रुग्णालयाची खोली कुठे आहे?,false
+MEDICINE SHOP WHERE,Where is the pharmacy / medical shop?,दवा की दुकान कहाँ है?,औषधांचे दुकान कुठे आहे?,false
+AMBULANCE COME WHEN,When is the ambulance arriving?,एम्बुलेंस कब पहुंचेगी?,रुग्णवाहिका कधी पोहोचेल?,true
+POLICE STATION WHERE,Where is the police station?,पुलिस स्टेशन कहाँ है?,पोलीस स्टेशन कुठे आहे?,false
+FIRE STATION WHERE,Where is the fire station?,दमकल केंद्र कहाँ है?,अग्निशामक केंद्र कुठे आहे?,false
+ME PAIN MEDICINE NEED,I have pain and need medicine.,मुझे दर्द है और दवा चाहिए।,मला त्रास होत असून औषध हवे आहे.,true
+DOCTOR HELP PLEASE,"Doctor, please help me.","डॉक्टर, कृपया मेरी मदद करें।","डॉक्टर, कृपया मला मदत करा.",true
+ME HURT HELP,"I am hurt, please help.","मुझे चोट लगी है, कृपया सहायता करें।","मला दुखापत झाली आहे, कृपया मदत करा.",true
+CANNOT BREATHE HELP,"I cannot breathe, please help.","मुझे सांस लेने में तकलीफ हो रही है, कृपया मदद करें।","मला श्वास घेण्यास त्रास होत आहे, मदत करा.",true
+CHEST PAIN EMERGENCY,"I have chest pain, emergency!","मेरी छाती में दर्द हो रहा है, आपातकाल!","माझ्या छातीत दुखत आहे, आणीबाणी!",true
+BLOOD COME HELP,"Bleeding, please help!","खून बह रहा है, कृपया मदद करें!","रक्तस्त्राव होत आहे, कृपया मदत करा!",true
+FALL DOWN PAIN,I fell down and I am in pain.,मैं गिर गया और मुझे दर्द हो रहा है।,मी खाली पडलो आणि मला वेदना होत आहेत.,true
+LOST WAY HELP,"I am lost, please help me with directions.","मैं रास्ता भटक गया हूँ, कृपया मदद करें।","मी रस्ता चुकलो आहे, कृपया मदत करा.",false
+HOME GO ADDRESS THIS,I want to go home to this address.,मुझे इस पते पर घर जाना है।,मला या पत्त्यावर घरी जायचे आहे.,false
+FAMILY CALL PLEASE,Please call my family.,कृपया मेरे परिवार को फोन करें।,कृपया माझ्या कुटुंबाला फोन करा.,false
+PHONE USE PLEASE,"May I use your phone, please?",क्या मैं आपका फोन इस्तेमाल कर सकता हूँ?,मी तुमचा फोन वापरू शकतो का?,false
+CHARGE WHERE,Where can I charge my phone?,फोन चार्ज कहाँ कर सकते हैं?,फोन कुठे चार्ज करता येईल?,false
+THANK_YOU VERY_MUCH,Thank you very much indeed.,आपका बहुत-बहुत धन्यवाद।,आपले खूप मनापासून आभार.,false
+WELCOME COME IN,"Welcome, please come inside.","स्वागत है, कृपया अंदर आएं।","स्वागत आहे, कृपया आत या.",false
+WAIT 5 MINUTES,Please wait for five minutes.,कृपया पाँच मिनट रुकिए।,कृपया पाच मिनिटे थांबा.,false
+ME READY GO,I am ready to go.,मैं जाने के लिए तैयार हूँ।,मी जाण्यासाठी तयार आहे.,false
+NOT READY WAIT,"I am not ready yet, please wait.","मैं अभी तैयार नहीं हूँ, कृपया रुकें।","मी अजून तयार नाही, कृपया थांबा.",false
+ME HAPPY MEET YOU,I am very happy to meet you.,मुझे आपसे मिलकर बहुत खुशी हुई।,मला तुम्हाला भेटून खूप आनंद झाला.,false
+SEE YOU TOMORROW,See you tomorrow.,कल मिलते हैं।,उद्या भेटूया.,false
+HAVE A GOOD DAY,Have a good day!,आपका दिन शुभ हो!,तुमचा दिवस चांगला जावो!,false
+FOOD TASTY THANK_YOU,"The food was very tasty, thank you.","खाना बहुत स्वादिष्ट था, धन्यवाद।","जेवण खूप चविष्ट होते, धन्यवाद.",false
+WATER COLD PLEASE,Please give me cold water.,कृपया ठंडा पानी दीजिए।,कृपया थंड पाणी द्या.,false
+TEA WANT,I would like some tea.,मुझे चाय चाहिए।,मला चहा हवा आहे.,false
+COFFEE WANT,I would like some coffee.,मुझे कॉफी चाहिए।,मला कॉफी हवी आहे.,false
+BILL GIVE PLEASE,Please bring the bill.,कृपया बिल दीजिए।,कृपया बिल द्या.,false
+HOW MUCH MONEY THIS,How much does this cost?,यह कितने का है?,हे किती रुपयांचे आहे?,false
+RECEIPT GIVE PLEASE,Please provide a receipt.,कृपया रसीद दीजिए।,कृपया पावती द्या.,false
+SHOP CLOSE WHEN,When does the shop close?,दुकान कब बंद होती है?,दुकान कधी बंद होते?,false
+SHOP OPEN WHEN,When does the shop open?,दुकान कब खुलती है?,दुकान कधी उघडते?,false
+TRAIN TIME WHAT,What is the train time?,ट्रेन का क्या समय है?,ट्रेनची वेळ काय आहे?,false
+BUS COME WHEN,When will the bus come?,बस कब आएगी?,बस कधी येईल?,false
+AIRPORT GO HOW,How do I reach the airport?,हवाई अड्डे कैसे पहुँचें?,विमानतळावर कसे पोहोचायचे?,false

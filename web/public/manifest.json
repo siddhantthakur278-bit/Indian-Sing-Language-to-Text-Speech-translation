@@ -1,0 +1,16 @@
+{
+  "name": "Indian Sign Language to Speech Translator",
+  "short_name": "ISL Translator",
+  "description": "Real-time AI bridge translating ISL signs to Indian text and speech",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B1324",
+  "theme_color": "#14213D",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

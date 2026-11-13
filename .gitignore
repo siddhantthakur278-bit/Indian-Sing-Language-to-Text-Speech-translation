@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js Build
+.next/
+out/
+build/
+dist/
+
+# Dataset & Media (Excluded per Privacy and Storage Rules)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Model weights & Checkpoints (> 50MB)
+*.h5
+*.keras
+*.tflite
+*.onnx
+*.tar.gz
+*.zip
+*.pt
+*.pth
+*.npz
+!ml/sample_io.npz
+
+# OS & IDE metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing & Coverage
+coverage/
+.pytest_cache/
+.coverage
+htmlcov/

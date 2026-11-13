@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 640" width="100%" height="100%">
+  <defs>
+    <filter id="mShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1050" height="640" rx="16" fill="#080e1a"/>
+
+  <!-- Title Banner -->
+  <text x="525" y="40" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="20" font-weight="800" text-anchor="middle">
+    Mobile Progressive Web App (PWA) Interface Views
+  </text>
+  <text x="525" y="62" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">
+    Optimized for handheld smartphones • Offline caching • One-hand accessibility
+  </text>
+
+  <!-- ================= PHONE 1: LIVE TRANSLATE ================= -->
+  <g transform="translate(60, 90)" filter="url(#mShadow)">
+    <!-- Screen Header Label -->
+    <text x="140" y="-12" fill="#0fa3b1" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">
+      1. Live Translate
+    </text>
+
+    <!-- Phone Chassis (280 x 510) -->
+    <rect width="280" height="510" rx="32" fill="#14213d" stroke="#334155" stroke-width="4"/>
+    <rect x="90" y="8" width="100" height="16" rx="8" fill="#0b1324"/> <!-- Dynamic Island / Notch -->
+
+    <!-- Screen Inner View -->
+    <g transform="translate(15, 35)">
+      <!-- Camera Card (250 x 200) -->
+      <rect width="250" height="200" rx="16" fill="#080e1a" stroke="#1f2f54" stroke-width="1.5"/>
+
+      <!-- Sign Detected Tag -->
+      <rect x="12" y="12" width="105" height="24" rx="6" fill="#0fa3b1"/>
+      <text x="64" y="28" fill="#080e1a" font-family="sans-serif" font-size="11" font-weight="800" text-anchor="middle">
+        WATER 91%
+      </text>
+
+      <!-- Skeleton points simulation -->
+      <g transform="translate(125, 115) scale(0.65)">
+        <circle cx="0" cy="-40" r="25" fill="none" stroke="#2a9d8f" stroke-width="2"/>
+        <line x1="-40" y1="0" x2="40" y2="0" stroke="#0fa3b1" stroke-width="3"/>
+        <line x1="0" y1="0" x2="0" y2="60" stroke="#0fa3b1" stroke-width="3"/>
+        <circle cx="-40" cy="0" r="5" fill="#f77f00"/>
+        <circle cx="40" cy="0" r="5" fill="#f77f00"/>
+        <!-- Hands raised to mouth for 'WATER' -->
+        <line x1="40" y1="0" x2="25" y2="-30" stroke="#0fa3b1" stroke-width="2.5"/>
+        <circle cx="25" cy="-30" r="5" fill="#fcbf49"/>
+        <circle cx="20" cy="-45" r="4" fill="#48cae4"/>
+      </g>
+
+      <!-- Caption & Translation Box -->
+      <rect x="0" y="215" width="250" height="105" rx="14" fill="#0b1324" stroke="#1f2f54" stroke-width="1"/>
+      <text x="14" y="240" fill="#ffffff" font-family="sans-serif" font-size="16" font-weight="700">
+        I need water.
+      </text>
+      <text x="14" y="268" fill="#f77f00" font-family="sans-serif" font-size="15" font-weight="700">
+        mujhe paani chahiye.
+      </text>
+      <text x="14" y="295" fill="#64748b" font-family="sans-serif" font-size="10">
+        Hindi (हिन्दी)
+      </text>
+
+      <!-- Language Selector -->
+      <rect x="0" y="335" width="250" height="38" rx="10" fill="#1f2f54" stroke="#334155" stroke-width="1"/>
+      <text x="15" y="358" fill="#e2e8f0" font-family="sans-serif" font-size="12">Language: Hindi v</text>
+
+      <!-- Big Speak Button -->
+      <rect x="0" y="390" width="250" height="48" rx="14" fill="#f77f00"/>
+      <text x="125" y="420" fill="#ffffff" font-family="sans-serif" font-size="16" font-weight="800" text-anchor="middle">
+        🔊 Speak
+      </text>
+    </g>
+  </g>
+
+  <!-- ================= PHONE 2: EMERGENCY MODE ================= -->
+  <g transform="translate(385, 90)" filter="url(#mShadow)">
+    <!-- Screen Header Label -->
+    <text x="140" y="-12" fill="#d62839" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">
+      2. Emergency Mode (SOS)
+    </text>
+
+    <!-- Phone Chassis (280 x 510) -->
+    <rect width="280" height="510" rx="32" fill="#14213d" stroke="#d62839" stroke-width="3"/>
+    <rect x="90" y="8" width="100" height="16" rx="8" fill="#0b1324"/>
+
+    <!-- Screen Inner View -->
+    <g transform="translate(15, 35)">
+      <!-- Emergency Header Banner -->
+      <rect width="250" height="52" rx="12" fill="#d62839"/>
+      <text x="125" y="32" fill="#ffffff" font-family="sans-serif" font-size="16" font-weight="900" text-anchor="middle" letter-spacing="1">
+        🚨 EMERGENCY
+      </text>
+
+      <!-- Emergency Quick Action Buttons -->
+      <g transform="translate(0, 70)">
+        <!-- Btn 1 -->
+        <rect width="250" height="52" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="125" y="32" fill="#ffffff" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">
+          I need a doctor
+        </text>
+
+        <!-- Btn 2 -->
+        <rect y="64" width="250" height="52" rx="12" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="125" y="96" fill="#ffffff" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">
+          Call an ambulance
+        </text>
+
+        <!-- Btn 3 -->
+        <rect y="128" width="250" height="52" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="125" y="160" fill="#ffffff" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">
+          Call the police
+        </text>
+
+        <!-- Btn 4 -->
+        <rect y="192" width="250" height="52" rx="12" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="125" y="224" fill="#ffffff" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">
+          I am in pain
+        </text>
+
+        <!-- Btn 5 -->
+        <rect y="256" width="250" height="52" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="125" y="288" fill="#ffffff" font-family="sans-serif" font-size="14" font-weight="700" text-anchor="middle">
+          Please help me
+        </text>
+      </g>
+
+      <text x="125" y="420" fill="#94a3b8" font-family="sans-serif" font-size="10" text-anchor="middle">
+        Tap = speak loudly + show full screen
+      </text>
+    </g>
+  </g>
+
+  <!-- ================= PHONE 3: TWO-WAY CHAT ================= -->
+  <g transform="translate(710, 90)" filter="url(#mShadow)">
+    <!-- Screen Header Label -->
+    <text x="140" y="-12" fill="#48cae4" font-family="sans-serif" font-size="13" font-weight="700" text-anchor="middle">
+      3. Two-Way Conversation
+    </text>
+
+    <!-- Phone Chassis (280 x 510) -->
+    <rect width="280" height="510" rx="32" fill="#14213d" stroke="#334155" stroke-width="4"/>
+    <rect x="90" y="8" width="100" height="16" rx="8" fill="#0b1324"/>
+
+    <!-- Screen Inner View -->
+    <g transform="translate(15, 35)">
+      <!-- Chat bubbles -->
+      <!-- Message 1 (From Signer) -->
+      <rect x="15" y="15" width="220" height="42" rx="14" fill="#1f2f54"/>
+      <text x="28" y="41" fill="#ffffff" font-family="sans-serif" font-size="11" font-weight="500">
+        I am going to the hospital.
+      </text>
+
+      <!-- Message 2 (From Hearing Partner) -->
+      <rect x="55" y="75" width="180" height="42" rx="14" fill="#0fa3b1" fill-opacity="0.2" stroke="#0fa3b1" stroke-width="1"/>
+      <text x="70" y="101" fill="#e2e8f0" font-family="sans-serif" font-size="11" font-weight="500">
+        Okay. Which doctor?
+      </text>
+
+      <!-- Message 3 (From Signer) -->
+      <rect x="15" y="135" width="220" height="42" rx="14" fill="#1f2f54"/>
+      <text x="28" y="161" fill="#ffffff" font-family="sans-serif" font-size="11" font-weight="500">
+        Heart doctor, please.
+      </text>
+
+      <!-- Message 4 (From Hearing Partner) -->
+      <rect x="55" y="195" width="180" height="42" rx="14" fill="#0fa3b1" fill-opacity="0.2" stroke="#0fa3b1" stroke-width="1"/>
+      <text x="70" y="221" fill="#e2e8f0" font-family="sans-serif" font-size="11" font-weight="500">
+        Room 12, second floor.
+      </text>
+
+      <text x="125" y="360" fill="#64748b" font-family="sans-serif" font-size="10" text-anchor="middle">
+        Speech &gt; text &gt; sign video
+      </text>
+
+      <!-- Hearing User Speak Mic Button -->
+      <rect y="390" width="250" height="48" rx="14" fill="#0fa3b1"/>
+      <text x="125" y="420" fill="#080e1a" font-family="sans-serif" font-size="13" font-weight="800" text-anchor="middle">
+        🎤 Mic: Hearing User Speaks
+      </text>
+    </g>
+  </g>
+</svg>
