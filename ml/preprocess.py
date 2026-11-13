@@ -40,7 +40,13 @@ def normalize_frame_pure_python(frame: List[float]) -> List[float]:
     """
     Normalizes a single 258-dimensional frame using pure Python arithmetic.
     Ensures missing hands remain strictly 0.0 and no NaNs are produced.
+    Raises ValueError if frame dimension is not 258.
     """
+    if frame is None or not isinstance(frame, (list, tuple)):
+        raise TypeError(f"Expected frame to be a list or tuple, got {type(frame).__name__}")
+    if len(frame) != 258:
+        raise ValueError(f"Expected frame feature dimension 258 (Contract 7.1), got {len(frame)}")
+
     out = list(frame)
     # Left shoulder: landmark 11 -> indices 44, 45, 46
     # Right shoulder: landmark 12 -> indices 48, 49, 50
@@ -101,6 +107,17 @@ def normalize_landmarks_numpy(seq: "np.ndarray") -> "np.ndarray":
     Vectorized normalization for a 2D numpy array of shape (T, 258).
     Strictly preserves zeros for absent hands and ensures no NaNs or Infs.
     """
+    if seq is None:
+        raise TypeError("Input sequence cannot be None")
+    if not isinstance(seq, np.ndarray):
+        seq = np.asarray(seq, dtype=np.float32)
+    if seq.ndim != 2:
+        raise ValueError(f"Expected 2D array of shape (T, 258), got ndim={seq.ndim}, shape={seq.shape}")
+    if seq.shape[0] == 0:
+        raise ValueError("Input sequence cannot be empty (T >= 1 required)")
+    if seq.shape[1] != 258:
+        raise ValueError(f"Expected feature dimension 258 (Contract 7.1), got {seq.shape[1]}")
+
     out = np.array(seq, dtype=np.float32).copy()
     num_frames = len(out)
 
@@ -148,9 +165,15 @@ def normalize_landmarks(seq):
     Main normalization entry point supporting NumPy arrays or Python lists.
     Guarantees Integration Contract 7.1 compliance.
     """
+    if seq is None:
+        raise TypeError("Input sequence cannot be None")
     if HAS_NUMPY and isinstance(seq, np.ndarray):
         return normalize_landmarks_numpy(seq)
     else:
+        if not isinstance(seq, (list, tuple)):
+            raise TypeError(f"Expected sequence to be a list or tuple, got {type(seq).__name__}")
+        if len(seq) == 0:
+            raise ValueError("Input sequence cannot be empty (T >= 1 required)")
         return [normalize_frame_pure_python(frame) for frame in seq]
 
 
