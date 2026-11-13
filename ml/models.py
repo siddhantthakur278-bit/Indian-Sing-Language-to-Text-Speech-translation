@@ -100,3 +100,95 @@ class ModelFactory:
 def get_model(arch: str = "bilstm", seq_len: int = 30, feat_dim: int = 258, num_classes: int = 70):
     """Backward-compatible functional API wrapping ModelFactory."""
     return ModelFactory.create_model(arch=arch, seq_len=seq_len, feat_dim=feat_dim, num_classes=num_classes)
+
+
+def validate_model_checkpoint(
+    model_path: str,
+    expected_seq_len: int = 30,
+    expected_feat_dim: int = 258,
+    expected_num_classes: Optional[int] = 70,
+) -> dict:
+    """
+    Validates a saved model checkpoint file:
+    1. Checks file existence and non-zero size.
+    2. Safely loads the model if TensorFlow is available.
+    3. Validates input tensor shape: (None, expected_seq_len, expected_feat_dim).
+    4. Validates output tensor shape: (None, expected_num_classes).
+    Returns dict with validity, shapes, parameter counts, and diagnostics.
+    """
+    if not os.path.exists(model_path):
+        return {"valid": False, "error": f"Model file '{model_path}' does not exist"}
+
+    file_size_bytes = os.path.getsize(model_path)
+    if file_size_bytes == 0:
+        return {"valid": False, "error": f"Model file '{model_path}' is empty (0 bytes)"}
+
+    try:
+        import tensorflow as tf
+    except ImportError:
+        return {
+            "valid": True,
+            "file_size_bytes": file_size_bytes,
+            "file_size_mb": file_size_bytes / (1024 * 1024),
+            "warning": "TensorFlow not installed in current environment; file presence verified",
+        }
+
+    try:
+        model = tf.keras.models.load_model(model_path)
+    except Exception as e:
+        return {"valid": False, "error": f"Failed to deserialize model checkpoint: {e}"}
+
+    input_shape = getattr(model, "input_shape", None)
+    output_shape = getattr(model, "output_shape", None)
+
+    expected_in = (None, expected_seq_len, expected_feat_dim)
+    if input_shape != expected_in:
+        return {
+            "valid": False,
+            "error": f"Input shape mismatch: expected {expected_in}, got {input_shape}",
+            "input_shape": input_shape,
+            "output_shape": output_shape,
+        }
+
+    if expected_num_classes is not None:
+        expected_out = (None, expected_num_classes)
+        if output_shape != expected_out:
+            return {
+                "valid": False,
+                "error": f"Output shape mismatch: expected {expected_out}, got {output_shape}",
+                "input_shape": input_shape,
+                "output_shape": output_shape,
+            }
+
+    return {
+        "valid": True,
+        "input_shape": input_shape,
+        "output_shape": output_shape,
+        "num_classes": output_shape[-1] if output_shape else None,
+        "file_size_mb": file_size_bytes / (1024 * 1024),
+        "total_params": model.count_params() if hasattr(model, "count_params") else None,
+        "error": None,
+    }
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="ISL Model Architecture & Checkpoint Validator")
+    parser.add_argument("--validate-checkpoint", type=str, help="Path to .keras model checkpoint to inspect")
+    parser.add_argument("--seq_len", type=int, default=30, help="Expected sequence length (default: 30)")
+    parser.add_argument("--feat_dim", type=int, default=258, help="Expected feature dimension (default: 258)")
+    parser.add_argument("--classes", type=int, default=70, help="Expected number of classes (default: 70)")
+    args = parser.parse_args()
+
+    if args.validate_checkpoint:
+        result = validate_model_checkpoint(
+            args.validate_checkpoint,
+            expected_seq_len=args.seq_len,
+            expected_feat_dim=args.feat_dim,
+            expected_num_classes=args.classes,
+        )
+        print("Checkpoint Validation Result:")
+        for k, v in result.items():
+            print(f"  {k}: {v}")
+    else:
+        parser.print_help()
