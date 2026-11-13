@@ -7,6 +7,7 @@ import { LanguageSelect, SUPPORTED_LANGUAGES } from "@/components/LanguageSelect
 import { EmergencyBar } from "@/components/EmergencyBar";
 import { HistoryLog, HistoryItem } from "@/components/HistoryLog";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
+import { AriaAnnouncer } from "@/components/AriaAnnouncer";
 import { speakText, stopSpeaking } from "@/lib/speech";
 import { requestSentenceTranslation } from "@/lib/api";
 import { soundEffects } from "@/lib/audioFeedback";
@@ -256,6 +257,9 @@ export default function Home() {
           <span>Team: Siddhant • Parth • Abhi</span>
         </div>
       </footer>
+
+      {/* Screen Reader ARIA Live Announcer */}
+      <AriaAnnouncer message={translatedSentence || (detectedSign ? `Sign detected: ${detectedSign}` : "")} />
 
       {/* Accessibility & Settings Drawer */}
       <SettingsDrawer
