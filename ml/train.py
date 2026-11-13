@@ -16,31 +16,34 @@ from tensorflow.keras import layers, models, callbacks
 from sklearn.utils.class_weight import compute_class_weight
 
 from preprocess import normalize, augment_sequence, signer_wise_split
-from models import get_model, build_bilstm_model
+from models import get_model, ModelFactory
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def build_bilstm_model(seq_len: int = 30, feat_dim: int = 258, num_classes: int = 70) -> tf.keras.Model:
-    """Constructs the baseline BiLSTM network architecture specified in Section 8.1."""
-    inputs = layers.Input(shape=(seq_len, feat_dim), name="landmark_input")
-    x = layers.Masking(mask_value=0.0, name="zero_masking")(inputs)
-    x = layers.Bidirectional(layers.LSTM(128, return_sequences=True, name="bilstm_1"), name="bi_wrapper_1")(x)
-    x = layers.Dropout(0.3, name="dropout_1")(x)
-    x = layers.Bidirectional(layers.LSTM(64, return_sequences=False, name="bilstm_2"), name="bi_wrapper_2")(x)
-    x = layers.Dropout(0.3, name="dropout_2")(x)
-    x = layers.Dense(128, activation="relu", name="dense_features")(x)
-    x = layers.BatchNormalization(name="bn_features")(x)
-    outputs = layers.Dense(num_classes, activation="softmax", name="class_probabilities")(x)
+def validate_train_arguments(data_dir: str,
+                             classes_path: str,
+                             output_model: str,
+                             epochs: int,
+                             batch_size: int,
+                             arch: str):
+    """Validates command-line and function arguments for model training."""
+    if epochs <= 0:
+        raise ValueError(f"Epochs must be a positive integer, got {epochs}")
+    if batch_size <= 0:
+        raise ValueError(f"Batch size must be a positive integer, got {batch_size}")
 
-    model = models.Model(inputs=inputs, outputs=outputs, name="ISL_BiLSTM_Classifier")
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
-    )
-    return model
+    supported_archs = ModelFactory.SUPPORTED_ARCHITECTURES
+    if arch.lower().strip() not in supported_archs:
+        raise ValueError(f"Unsupported architecture '{arch}'. Choose from {supported_archs}")
+
+    valid_exts = (".keras", ".h5")
+    if not any(output_model.endswith(ext) for ext in valid_exts):
+        raise ValueError(f"Output model filename must end with {valid_exts}, got '{output_model}'")
+
+    if not os.path.exists(classes_path):
+        raise FileNotFoundError(f"Classes file '{classes_path}' not found.")
 
 
 def load_dataset(processed_dir: str, classes_file: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
@@ -95,7 +98,9 @@ def load_dataset(processed_dir: str, classes_file: str) -> Tuple[np.ndarray, np.
 
 
 def train(data_dir: str, classes_path: str, output_model: str = "isl_model.keras", epochs: int = 100, batch_size: int = 32, arch: str = "bilstm"):
-    """Main model training routine."""
+    """Main model training routine with hyperparameter validation."""
+    validate_train_arguments(data_dir, classes_path, output_model, epochs, batch_size, arch)
+
     logger.info(f"Loading data from {data_dir} and classes from {classes_path}...")
     X, y, classes = load_dataset(data_dir, classes_path)
     num_classes = len(classes)
