@@ -27,6 +27,10 @@ mp_drawing = mp.solutions.drawing_utils
 
 def run_demo(model_path: str = "isl_model.keras", classes_path: str = "data/classes.json"):
     # Load vocabulary
+    if not os.path.exists(classes_path):
+        print(f"Error: Classes file not found: {classes_path}")
+        return
+
     with open(classes_path, "r") as f:
         meta = json.load(f)
     classes = meta["classes"]

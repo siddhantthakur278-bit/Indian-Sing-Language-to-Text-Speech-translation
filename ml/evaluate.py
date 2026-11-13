@@ -22,16 +22,24 @@ logger = logging.getLogger(__name__)
 
 
 def evaluate_model(model_path: str, data_dir: str, classes_path: str, output_dir: str = "docs"):
-    """Runs rigorous evaluation on the specified test set."""
+    """Runs rigorous evaluation on the specified test set with missing-file safety."""
+    if not os.path.exists(classes_path):
+        logger.error(f"Evaluation failed: classes file '{classes_path}' does not exist.")
+        return
+
+    if not os.path.exists(model_path):
+        logger.error(f"Evaluation failed: model file '{model_path}' does not exist.")
+        return
+
+    if not os.path.exists(data_dir):
+        logger.error(f"Evaluation failed: data directory '{data_dir}' does not exist.")
+        return
+
     os.makedirs(output_dir, exist_ok=True)
 
     with open(classes_path, "r") as f:
         meta = json.load(f)
     classes = meta["classes"]
-
-    if not os.path.exists(model_path):
-        logger.error(f"Model file {model_path} does not exist.")
-        return
 
     logger.info(f"Loading model from {model_path}...")
     model = tf.keras.models.load_model(model_path)
