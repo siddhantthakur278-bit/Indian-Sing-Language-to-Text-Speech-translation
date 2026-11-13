@@ -8,13 +8,12 @@ Implements Integration Contract 7.2:
 import os
 import json
 import logging
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, validator
 
 from config import settings
 from gloss_to_text import glosses_to_sentence
+from schemas import SentenceRequest, SentenceResponse
 from translate import translate_text
 from tts import get_speech_audio
 
@@ -46,37 +45,6 @@ if os.path.exists(CLASSES_PATH):
             VALID_CLASSES = set(meta.get("classes", []))
     except Exception as e:
         logger.warning(f"Could not load classes.json from {CLASSES_PATH}: {e}")
-
-SUPPORTED_LANGUAGES = {"en", "hi", "mr", "ta", "bn", "te", "gu", "kn", "ml", "pa"}
-
-
-class SentenceRequest(BaseModel):
-    glosses: List[str] = Field(..., max_items=20, description="List of recognized ISL gloss tokens (up to 20)")
-    lang: str = Field(default="en", description="Target language short code (en, hi, mr, etc.)")
-
-    @validator("lang")
-    def validate_language(cls, v):
-        v = v.lower().strip()
-        if v not in SUPPORTED_LANGUAGES:
-            raise ValueError(f"Language '{v}' is not supported. Choose from {sorted(list(SUPPORTED_LANGUAGES))}")
-        return v
-
-    @validator("glosses")
-    def validate_gloss_tokens(cls, v):
-        if not v:
-            raise ValueError("Glosses list cannot be empty.")
-        if len(v) > 20:
-            raise ValueError("Cannot process more than 20 glosses in a single sequence.")
-        return v
-
-
-class SentenceResponse(BaseModel):
-    sentence: str = Field(..., description="Grammatically natural English sentence")
-    translated: str = Field(..., description="Sentence translated into target language")
-    lang: str = Field(..., description="Target language code")
-    emergency: bool = Field(..., description="Emergency safety flag (True if emergency detected)")
-    audio_url: Optional[str] = Field(default=None, description="Cloud TTS audio URL or null for browser speech")
-
 
 @app.get("/health", tags=["Health"])
 async def health_check():
