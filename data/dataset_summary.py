@@ -201,6 +201,129 @@ def audit_metadata(metadata_path: str = "data/metadata.csv"):
     print("=" * 65)
 
 
+def validate_metadata(metadata_path: str = "data/metadata.csv",
+                      classes_path: str = "data/classes.json",
+                      processed_dir: Optional[str] = "data/processed") -> bool:
+    """
+    Validates metadata.csv schema, values, and partition integrity:
+    1. Required headers present (clip, gloss, signer_id, split, source, quality_flag).
+    2. Valid split values (train, val, test).
+    3. Valid gloss names against classes.json.
+    4. Signer ID format validation (e.g. p01, p02).
+    5. Strict signer-wise isolation (zero data leakage across splits).
+    6. Unique clip filenames (no duplicates).
+    7. Existence of files on disk if processed_dir is specified.
+    """
+    print("\n" + "=" * 65)
+    print(f"METADATA CATALOG INTEGRITY VALIDATION: {metadata_path}")
+    print("=" * 65)
+
+    if not os.path.exists(metadata_path):
+        print(f"[FAIL] Metadata file not found: {metadata_path}")
+        return False
+
+    classes_set = set()
+    if os.path.exists(classes_path):
+        with open(classes_path, "r", encoding="utf-8") as f:
+            classes_meta = json.load(f)
+            classes_set = set(classes_meta.get("classes", []))
+
+    required_headers = {"clip", "gloss", "signer_id", "split", "source", "quality_flag"}
+    valid_splits = {"train", "val", "test"}
+
+    seen_clips = set()
+    duplicate_clips = []
+    invalid_splits = []
+    invalid_glosses = []
+    malformed_signers = []
+    missing_files = []
+    signer_by_split = defaultdict(set)
+    total_rows = 0
+
+    with open(metadata_path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        headers = set(reader.fieldnames or [])
+        missing_headers = required_headers - headers
+        if missing_headers:
+            print(f"[FAIL] Missing required column headers: {missing_headers}")
+            return False
+
+        for row_idx, row in enumerate(reader, start=2):
+            total_rows += 1
+            clip = row.get("clip", "").strip()
+            gloss = row.get("gloss", "").strip()
+            signer = row.get("signer_id", "").strip()
+            split = row.get("split", "").strip()
+
+            if clip in seen_clips:
+                duplicate_clips.append(f"Row {row_idx}: {clip}")
+            else:
+                seen_clips.add(clip)
+
+            if split not in valid_splits:
+                invalid_splits.append(f"Row {row_idx}: {split}")
+            else:
+                signer_by_split[split].add(signer)
+
+            if classes_set and gloss not in classes_set:
+                invalid_glosses.append(f"Row {row_idx}: {gloss}")
+
+            if not re.match(r"^p\d+$", signer):
+                malformed_signers.append(f"Row {row_idx}: {signer}")
+
+            if processed_dir and os.path.exists(processed_dir):
+                file_on_disk = os.path.join(processed_dir, gloss, clip)
+                if not os.path.exists(file_on_disk):
+                    missing_files.append(file_on_disk)
+
+    # Check signer leakage across partitions
+    train_signers = signer_by_split["train"]
+    val_signers = signer_by_split["val"]
+    test_signers = signer_by_split["test"]
+
+    train_val_leak = train_signers & val_signers
+    train_test_leak = train_signers & test_signers
+    val_test_leak = val_signers & test_signers
+    has_leakage = bool(train_val_leak or train_test_leak or val_test_leak)
+
+    print(f"Total Metadata Rows      : {total_rows}")
+    print(f"Unique Clips Registered  : {len(seen_clips)}")
+    print(f"Duplicate Clips          : {len(duplicate_clips)}")
+    print(f"Invalid Split Values     : {len(invalid_splits)}")
+    print(f"Invalid Gloss Names      : {len(invalid_glosses)}")
+    print(f"Malformed Signer IDs     : {len(malformed_signers)}")
+    if processed_dir and os.path.exists(processed_dir):
+        print(f"Files Missing on Disk    : {len(missing_files)}")
+    print("-" * 65)
+
+    print("Signer Partition Isolation Check (Contract 7.3):")
+    print(f"  * Train Signers        : {sorted(list(train_signers))}")
+    print(f"  * Val Signers          : {sorted(list(val_signers))}")
+    print(f"  * Test Signers         : {sorted(list(test_signers))}")
+
+    if has_leakage:
+        if train_val_leak:
+            print(f"  [ERROR] Signer leakage between Train and Val: {train_val_leak}")
+        if train_test_leak:
+            print(f"  [ERROR] Signer leakage between Train and Test: {train_test_leak}")
+        if val_test_leak:
+            print(f"  [ERROR] Signer leakage between Val and Test: {val_test_leak}")
+    else:
+        print("  [PASS] Zero signer identity leakage detected across splits.")
+
+    passed = (total_rows > 0 and
+              len(duplicate_clips) == 0 and
+              len(invalid_splits) == 0 and
+              len(invalid_glosses) == 0 and
+              len(malformed_signers) == 0 and
+              not has_leakage)
+
+    verdict = "PASSED" if passed else "FAILED"
+    print(f"Metadata Validation Verdict: [{verdict}]")
+    print("=" * 65)
+    return passed
+
+
 def audit_dataset(data_dir: str = "data/raw", classes_path: str = "data/classes.json"):
     if not os.path.exists(classes_path):
         print(f"Error: {classes_path} not found.")
@@ -267,9 +390,12 @@ if __name__ == "__main__":
     parser.add_argument("--classes", type=str, default="data/classes.json", help="Path to classes.json")
     parser.add_argument("--metadata", type=str, default="data/metadata.csv", help="Path to metadata.csv")
     parser.add_argument("--validate", action="store_true", help="Perform deep shape and numeric validation on .npy files")
+    parser.add_argument("--validate-metadata", action="store_true", help="Perform strict validation on metadata.csv")
     args = parser.parse_args()
 
-    if args.validate:
+    if args.validate_metadata:
+        validate_metadata(args.metadata, args.classes, processed_dir=args.dir if os.path.exists(args.dir) else None)
+    elif args.validate:
         validate_dataset(args.dir, args.classes)
     else:
         audit_dataset(args.dir, args.classes)
