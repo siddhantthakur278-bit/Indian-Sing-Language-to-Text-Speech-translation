@@ -1,11 +1,12 @@
 """
 ISL Gloss-to-Sentence Natural Language Processing Engine
-
+========================================================
 Translates ISL gloss sequences (typically Subject-Object-Verb) into grammatically
 natural English sentences using:
 1. Fast rule-based dictionary templates for instant, offline conversion.
 2. Hard-coded safety-critical emergency phrase detection (bypasses LLM).
-3. Optional LLM few-shot prompt enhancement when LLM_API_KEY is configured.
+3. Question and polite request transformation heuristics.
+4. Optional LLM few-shot prompt enhancement when LLM_API_KEY is configured.
 """
 
 import os
@@ -37,6 +38,7 @@ EMERGENCY_TEMPLATES = {
     ("HELP", "ME", "HOSPITAL"): "Please help me, I need to go to the hospital.",
     ("DOCTOR", "CALL", "PLEASE"): "Please call a doctor immediately.",
     ("DOCTOR", "NEED"): "I need a doctor urgently.",
+    ("ME", "DOCTOR", "NEED"): "I need to see a doctor urgently.",
     ("AMBULANCE", "CALL", "PLEASE"): "Please call an ambulance right away.",
     ("POLICE", "CALL", "PLEASE"): "Please call the police immediately.",
     ("POLICE", "NEED"): "I need police assistance.",
@@ -75,6 +77,14 @@ RULE_TEMPLATES = {
     ("STOP", "PLEASE"): "Please stop here.",
     ("WRITE", "PLEASE"): "Please write it down.",
     ("SPEAK", "SLOW", "PLEASE"): "Please speak slowly.",
+    ("YOU", "HELP", "ME", "CAN"): "Can you please help me?",
+    ("WHEN", "COME"): "When will you come?",
+    ("WHY", "GO"): "Why are you going?",
+    ("HOW", "GO"): "How do I get there?",
+    ("WHAT", "HAPPEN"): "What happened?",
+    ("FAMILY", "WHERE"): "Where is my family?",
+    ("ME", "HUNGRY"): "I am hungry.",
+    ("ME", "THIRSTY"): "I am thirsty.",
 }
 
 
@@ -140,13 +150,10 @@ def query_llm_for_sentence(gloss_str: str) -> Optional[str]:
     if not api_key:
         return None
 
-    # Supported providers: Gemini / Anthropic / OpenAI / Groq
-    # Standard graceful fallback if API call fails
     try:
-        import requests
-        prompt = LLM_PROMPT_TEMPLATE.format(glosses=gloss_str)
+        import urllib.request
+        model = os.getenv("LLM_MODEL", "gemini-1.5-flash")
         # Placeholder for external HTTP invocation
-        # If no endpoint configured, return None to trigger safe fallback
         return None
     except Exception as e:
         logger.warning(f"LLM API query failed: {e}")
