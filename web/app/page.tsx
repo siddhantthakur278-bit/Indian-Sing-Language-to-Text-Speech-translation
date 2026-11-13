@@ -9,6 +9,7 @@ import { HistoryLog, HistoryItem } from "@/components/HistoryLog";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { speakText, stopSpeaking } from "@/lib/speech";
 import { requestSentenceTranslation } from "@/lib/api";
+import { soundEffects } from "@/lib/audioFeedback";
 
 export default function Home() {
   // Application State
@@ -52,7 +53,28 @@ export default function Home() {
 
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === targetLang) || SUPPORTED_LANGUAGES[0];
 
-  // Perform translation call
+  // Global keyboard shortcuts for accessibility
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is focusing an input or select
+      if (["INPUT", "SELECT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        setIsCameraActive((prev) => !prev);
+      } else if (e.key === "s" || e.key === "S") {
+        handleSpeak();
+      } else if (e.key === "c" || e.key === "C") {
+        handleClear();
+      } else if (e.key === "e" || e.key === "E") {
+        handleEmergencyTrigger("Please help me immediately!", "कृपया तुरंत मेरी सहायता करें!");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [translatedSentence, targetLang, speechRate]);
   const triggerTranslation = useCallback(async (currentGlosses: string[], lang: string) => {
     if (currentGlosses.length === 0) return;
     setIsTranslating(true);
