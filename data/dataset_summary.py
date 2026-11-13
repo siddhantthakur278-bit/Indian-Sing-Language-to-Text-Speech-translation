@@ -1,14 +1,62 @@
 """
 ISL Dataset Audit & Statistics Script
-Analyzes data/raw and data/processed directories to report class distributions,
-clip counts, signer distributions, and class imbalances.
+Analyzes data/raw, data/processed, and data/metadata.csv to report class distributions,
+clip counts, signer distributions, split ratios, and class imbalances.
 """
 
 import os
 import re
+import csv
 import json
 import argparse
 from collections import defaultdict, Counter
+
+
+def audit_metadata(metadata_path: str = "data/metadata.csv"):
+    """Audits the metadata.csv catalog for split distribution and quality flags."""
+    if not os.path.exists(metadata_path):
+        print(f"[Warning] Metadata file {metadata_path} not found.")
+        return
+
+    print("\n" + "=" * 65)
+    print(f"METADATA CATALOG AUDIT: {metadata_path}")
+    print("=" * 65)
+
+    split_counts = defaultdict(int)
+    signer_splits = defaultdict(set)
+    quality_flags = defaultdict(int)
+    source_counts = defaultdict(int)
+    gloss_counts = defaultdict(int)
+
+    with open(metadata_path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            split = row.get("split", "unknown")
+            signer = row.get("signer_id", "unknown")
+            flag = row.get("quality_flag", "valid")
+            source = row.get("source", "unknown")
+            gloss = row.get("gloss", "unknown")
+
+            split_counts[split] += 1
+            signer_splits[split].add(signer)
+            quality_flags[flag] += 1
+            source_counts[source] += 1
+            gloss_counts[gloss] += 1
+
+    total = sum(split_counts.values())
+    print(f"Total Registered Samples : {total}")
+    print(f"Unique Gloss Classes     : {len(gloss_counts)}")
+    print("-" * 65)
+    print("Dataset Split Distribution:")
+    for split, count in sorted(split_counts.items()):
+        signers = sorted(list(signer_splits[split]))
+        pct = (count / total * 100) if total > 0 else 0
+        print(f"  * {split.upper():<6}: {count:>4} samples ({pct:>5.1f}%) | Signers: {', '.join(signers)}")
+    print("-" * 65)
+    print("Quality & Source Summary:")
+    print(f"  * Sources : {dict(source_counts)}")
+    print(f"  * Quality : {dict(quality_flags)}")
+    print("=" * 65)
 
 
 def audit_dataset(data_dir: str = "data/raw", classes_path: str = "data/classes.json"):
@@ -16,10 +64,9 @@ def audit_dataset(data_dir: str = "data/raw", classes_path: str = "data/classes.
         print(f"Error: {classes_path} not found.")
         return
 
-    with open(classes_path, "r") as f:
+    with open(classes_path, "r", encoding="utf-8") as f:
         meta = json.load(f)
     classes = meta["classes"]
-    class_set = set(classes)
 
     print("=" * 65)
     print(f"ISL DATASET AUDIT SUMMARY: {data_dir}")
@@ -62,7 +109,6 @@ def audit_dataset(data_dir: str = "data/raw", classes_path: str = "data/classes.
             print(f"  • Signer {s_id}: {count} clips ({count / total_clips * 100:.1f}%)")
         print("-" * 65)
 
-    # Top and bottom classes
     sorted_classes = sorted(class_counts.items(), key=lambda x: x[1], reverse=True)
     print("Class Representation Overview:")
     for cls, count in sorted_classes[:10]:
@@ -77,5 +123,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Audit ISL dataset")
     parser.add_argument("--dir", type=str, default="data/raw", help="Folder to audit (data/raw or data/processed)")
     parser.add_argument("--classes", type=str, default="data/classes.json", help="Path to classes.json")
+    parser.add_argument("--metadata", type=str, default="data/metadata.csv", help="Path to metadata.csv")
     args = parser.parse_args()
     audit_dataset(args.dir, args.classes)
+    if os.path.exists(args.metadata):
+        audit_metadata(args.metadata)
