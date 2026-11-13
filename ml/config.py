@@ -55,8 +55,11 @@ NUM_CLASSES = len(CLASSES) if CLASSES else 70
 # - Left Hand:  21 points * 3 values (x, y, z)             =  63
 # - Right Hand: 21 points * 3 values (x, y, z)             =  63
 # Total feature dimension = 258 values per frame
-FEAT_DIM = 258
-SEQ_LEN = 30  # Fixed number of frames per video sequence
+POSE_LANDMARKS = 33           # MediaPipe Holistic pose landmarks count
+HAND_LANDMARKS = 21           # MediaPipe Holistic hand landmarks count
+FEAT_DIM = 258                # 33*4 (pose) + 21*3 (left hand) + 21*3 (right hand)
+SEQ_LEN = 30                  # Fixed number of frames per video sequence
+SEQUENCE_LENGTH = SEQ_LEN     # Canonical alias for pipeline scripts
 
 # Landmark indices for shoulder midpoint calculation
 POSE_LEFT_SHOULDER_IDX = 11   # landmarks 11: left shoulder
