@@ -12,6 +12,20 @@ from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+# IndicTrans2 FLORES-200 Language Tag Mapping (AI4Bharat Standard)
+INDICTRANS2_LANG_MAP = {
+    "en": "eng_Latn",
+    "hi": "hin_Deva",
+    "mr": "mar_Deva",
+    "ta": "tam_Taml",
+    "bn": "ben_Beng",
+    "te": "tel_Telu",
+    "gu": "guj_Gujr",
+    "kn": "kan_Knda",
+    "ml": "mal_Mlym",
+    "pa": "pan_Guru",
+}
+
 # Preloaded offline translation cache from data/gloss_pairs.csv
 _TRANSLATION_CACHE: Dict[tuple, str] = {}
 
