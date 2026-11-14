@@ -1,18 +1,18 @@
-"""
-Multilingual Indic Translation Module
-Supports translating English sentences to Indian Languages:
-- Hindi (hi), Marathi (mr), Tamil (ta), Bengali (bn), Telugu (te), Gujarati (gu)
-Includes in-memory LRU caching of repeated translations and graceful offline fallback.
-"""
+"""Offline Indic translation adapter with a bounded, thread-safe LRU cache."""
 
-import os
 import csv
 import logging
-from typing import Dict, Optional
+import threading
+from collections import OrderedDict
+from pathlib import Path
+from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
-# IndicTrans2 FLORES-200 Language Tag Mapping (AI4Bharat Standard)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+GLOSS_PAIRS_PATH = PROJECT_ROOT / "data" / "gloss_pairs.csv"
+MAX_TRANSLATION_CACHE_ENTRIES = 256
+
 INDICTRANS2_LANG_MAP = {
     "en": "eng_Latn",
     "hi": "hin_Deva",
@@ -26,40 +26,99 @@ INDICTRANS2_LANG_MAP = {
     "pa": "pan_Guru",
 }
 
-# Preloaded offline translation cache from data/gloss_pairs.csv
-_TRANSLATION_CACHE: Dict[tuple, str] = {}
+
+class TranslationProvider(Protocol):
+    """Interface implemented by available translation adapters."""
+
+    def translate(self, text: str, target_lang: str) -> str | None:
+        """Return a translation or None when this provider has no result."""
 
 
-def _warm_cache_from_dataset(csv_path: str = "data/gloss_pairs.csv"):
-    """Pre-populates translation cache with verified human translations."""
-    if not os.path.exists(csv_path):
-        return
-
-    try:
-        with open(csv_path, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                en = row.get("english_sentence", "").strip().lower()
-                hi = row.get("hindi_translation", "").strip()
-                mr = row.get("marathi_translation", "").strip()
-                if en and hi:
-                    _TRANSLATION_CACHE[(en, "hi")] = hi
-                if en and mr:
-                    _TRANSLATION_CACHE[(en, "mr")] = mr
-    except Exception as e:
-        logger.warning(f"Could not warm translation cache from CSV: {e}")
+class TranslationProviderError(RuntimeError):
+    """Raised when an external translation provider fails."""
 
 
-# Initialize cache
-_warm_cache_from_dataset()
+class OfflineCsvTranslationProvider:
+    """Look up existing Hindi and Marathi translations from the committed CSV."""
+
+    _translation_fields = {
+        "hi": "hindi_translation",
+        "mr": "marathi_translation",
+    }
+
+    def __init__(self, csv_path: Path = GLOSS_PAIRS_PATH) -> None:
+        self._translations: dict[tuple[str, str], str] = {}
+        try:
+            with csv_path.open(encoding="utf-8-sig", newline="") as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    english = (row.get("english_sentence") or "").strip().casefold()
+                    if not english:
+                        continue
+                    for language, field in self._translation_fields.items():
+                        translated = (row.get(field) or "").strip()
+                        if translated:
+                            self._translations[(english, language)] = translated
+        except FileNotFoundError:
+            logger.warning(
+                "Offline translation CSV is missing; English fallback is active"
+            )
+        except (OSError, UnicodeError, csv.Error):
+            logger.exception(
+                "Could not load offline translations; English fallback is active"
+            )
+
+    def translate(self, text: str, target_lang: str) -> str | None:
+        """Return a CSV translation for a matching sentence and language."""
+        field = self._translation_fields.get(target_lang)
+        if field is None:
+            return None
+        return self._translations.get((text.strip().casefold(), target_lang))
+
+
+class TranslationCache:
+    """Thread-safe least-recently-used cache with a fixed maximum size."""
+
+    def __init__(self, max_entries: int = MAX_TRANSLATION_CACHE_ENTRIES) -> None:
+        if max_entries < 1:
+            raise ValueError("max_entries must be greater than zero")
+        self._max_entries = max_entries
+        self._entries: OrderedDict[tuple[str, str], str] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def get(self, key: tuple[str, str]) -> str | None:
+        """Get and promote a cached translation."""
+        with self._lock:
+            value = self._entries.get(key)
+            if value is not None:
+                self._entries.move_to_end(key)
+            return value
+
+    def put(self, key: tuple[str, str], value: str) -> None:
+        """Store a translated value, evicting least-recently-used entries."""
+        with self._lock:
+            self._entries[key] = value
+            self._entries.move_to_end(key)
+            while len(self._entries) > self._max_entries:
+                self._entries.popitem(last=False)
+
+    def clear(self) -> None:
+        """Remove cached translations."""
+        with self._lock:
+            self._entries.clear()
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._entries)
+
+
+_TRANSLATION_PROVIDER: TranslationProvider = OfflineCsvTranslationProvider()
+_TRANSLATION_CACHE = TranslationCache()
+TRANSLATION_MODE = "offline_csv_with_english_fallback"
 
 
 def translate_text(text: str, target_lang: str) -> str:
-    """
-    Translates an English sentence into target_lang ('en', 'hi', 'mr', 'ta', etc.).
-    Returns translated text. If target is 'en' or translation is unavailable,
-    returns source text gracefully.
-    """
+    """Translate using available offline data, otherwise return the English source."""
     if not text:
         return ""
 
@@ -67,23 +126,18 @@ def translate_text(text: str, target_lang: str) -> str:
     if norm_target == "en":
         return text
 
-    cache_key = (text.strip().lower(), norm_target)
-    if cache_key in _TRANSLATION_CACHE:
-        return _TRANSLATION_CACHE[cache_key]
+    cache_key = (text.strip().casefold(), norm_target)
+    cached = _TRANSLATION_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
 
-    # Check for Bhashini or IndicTrans2 environment credentials
-    bhashini_key = os.getenv("BHASHINI_API_KEY")
-    bhashini_user = os.getenv("BHASHINI_USER_ID")
+    translated = _TRANSLATION_PROVIDER.translate(text, norm_target)
+    if translated:
+        _TRANSLATION_CACHE.put(cache_key, translated)
+        return translated
 
-    if bhashini_key and bhashini_user:
-        try:
-            # Bhashini ULCA API integration
-            # If online API call succeeds, cache and return
-            pass
-        except Exception as e:
-            logger.warning(f"Bhashini translation error: {e}")
-
-    # Fallback: check if partial words match dictionary or return English text with notification
-    logger.info(f"Target language '{norm_target}' fallback applied for: '{text}'")
-    _TRANSLATION_CACHE[cache_key] = text
+    logger.info(
+        "Offline translation unavailable for target '%s'; returning English text",
+        norm_target,
+    )
     return text
