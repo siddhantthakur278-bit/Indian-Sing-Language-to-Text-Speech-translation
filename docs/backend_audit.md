@@ -1,77 +1,54 @@
-# Backend Implementation Audit
+# Backend implementation status
 
-**Owner:** Abhi – NLP, Speech and Backend
+This status describes repository implementation, not production readiness.
 
-## 1. Gloss-to-Sentence
-File: backend/gloss_to_text.py
+## NLP and API
 
-- Rule-based sentence templates exist.
-- Emergency phrase detection exists.
-- LLM API integration is incomplete.
-- General sentence patterns need improvement.
+- `backend/gloss_to_text.py` provides deterministic templates, emergency
+  handling, ordinary heuristics, optional Gemini enhancement, and safe fallback.
+- Exact emergency templates and emergency keyword handling run before ordinary
+  rules. Emergency sequences bypass Gemini.
+- The Gemini adapter is optional, uses `LLM_API_KEY` and `LLM_MODEL`, and falls
+  back locally on provider errors or invalid output.
+- `POST /api/sentence` validates each normalized gloss against
+  `data/classes.json`, rejects `IDLE`, and returns HTTP 400 for vocabulary errors.
+- `POST /api/text-to-gloss` is a bounded rule-based English word mapper, not a
+  general-purpose or domain-verified ISL translator.
+- Both POST endpoints share the configured per-client in-memory rate limit.
+- Sentence responses are held in a bounded in-memory cache.
 
-## 2. FastAPI Backend
-File: backend/main.py
+## Translation and TTS
 
-- GET /health exists.
-- POST /api/sentence exists.
-- Request and response models exist.
-- Language validation exists.
-- Maximum gloss count is limited.
-- Vocabulary validation needs implementation.
-- Rate limiting needs implementation.
-- Feature availability is not reported by health endpoint.
+- Hindi and Marathi use exact offline entries in `data/gloss_pairs.csv`.
+- Missing offline translations return the English source unchanged.
+- Translation cache storage is bounded and thread-safe.
+- Bhashini and cloud TTS are not implemented. TTS returns `audio_url: null` for
+  browser `speechSynthesis` fallback.
 
-## 3. Translation
-File: backend/translate.py
+## Gloss dataset
 
-- Translation function exists.
-- In-memory translation cache exists.
-- Bhashini provider integration is incomplete.
-- Missing translations currently fall back to English.
+The original CSV had 219 rows. Sixty-nine rows contained glosses absent from the
+official 70-class vocabulary and were excluded rather than rewritten with
+unverified substitutions. One identical duplicate record was also removed. The
+current file has 149 rows; all retained glosses
+are canonical and all Hindi/Marathi fields are nonempty Devanagari text. This
+checks field shape and script, not translation quality. Coverage is 67 of 69
+non-`IDLE` classes; `HEAR` and `SEE` do not yet have dataset rows. No
+translations were generated to fill the gap.
 
-## 4. Text-to-Speech
-File: backend/tts.py
+Emergency labels are explicit boolean values. Twelve rows differ from a simple
+“contains one of HELP/PAIN/POLICE/AMBULANCE/FIRE/ACCIDENT/EMERGENCY/DANGER”
+indicator. This heuristic is not an authoritative emergency policy; neither
+labels nor emergency wording should be changed without ISL-domain-expert review.
+The sequence `DOCTOR CALL PLEASE` has both `true` and `false` labels; this
+conflict is retained and flagged for domain review rather than silently resolved.
 
-- Indian language locale mapping exists.
-- Browser speech synthesis is used by the frontend.
-- Cloud TTS integration is incomplete.
+## Verification boundaries
 
-## 5. Dataset
-Files:
-- data/classes.json
-- data/gloss_pairs.csv
+Automated tests cover input validation, offline lookup, provider mocks, cache and
+limiter behavior, and emergency bypass. They do not validate translation
+quality, ISL grammar, real-user usability, or emergency semantics. These require
+review by fluent ISL users/interpreters and user testing.
 
-- Vocabulary contains 70 classes.
-- Gloss-sentence examples exist.
-- Dataset quality and translation coverage require verification.
-
-## 6. Testing
-
-Existing tests:
-- backend/tests/test_api.py
-- backend/tests/test_gloss_to_text.py
-
-Additional testing is required for vocabulary validation,
-translation fallbacks, emergency handling and rate limiting.
-
-## 7. Development Roadmap
-
-1. Backend configuration and schemas.
-2. Vocabulary validation.
-3. NLP improvements.
-4. Emergency phrase separation.
-5. LLM integration.
-6. Translation adapters and caching.
-7. TTS improvements.
-8. API security and validation.
-9. Automated testing.
-10. Deployment and documentation.
-
-## 8. Development Principles
-
-- Never commit API secrets.
-- Never send signing videos to the backend.
-- Never present mock integrations as real integrations.
-- Preserve the agreed frontend API contract.
-- Test every meaningful implementation.
+See [backend test report](./BACKEND_TEST_REPORT.md), [API reference](./API.md),
+[configuration](./BACKEND_CONFIGURATION.md), and [privacy notes](./PRIVACY.md).
