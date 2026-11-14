@@ -8,7 +8,14 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tts import LANGUAGE_VOICE_MAP, get_speech_audio
+from tts import (
+    CLOUD_TTS_AVAILABLE,
+    LANGUAGE_VOICE_MAP,
+    TTS_MODE,
+    get_speech_audio,
+    get_tts_status,
+    get_voice_locale,
+)
 
 
 class TestTTSModule(unittest.TestCase):
@@ -23,6 +30,22 @@ class TestTTSModule(unittest.TestCase):
         # When cloud API keys are absent, returns None so frontend uses Web Speech API
         audio_url = get_speech_audio("नमस्ते", "hi")
         self.assertIsNone(audio_url)
+
+    def test_locale_lookup_normalizes_language_code(self):
+        self.assertEqual(get_voice_locale(" HI "), "hi-IN")
+        self.assertEqual(get_voice_locale("mr"), "mr-IN")
+
+    def test_locale_lookup_rejects_unsupported_language(self):
+        with self.assertRaises(ValueError):
+            get_voice_locale("xx")
+
+    def test_tts_status_reports_browser_fallback_not_cloud(self):
+        status = get_tts_status()
+
+        self.assertEqual(TTS_MODE, "browser_speech_synthesis")
+        self.assertFalse(CLOUD_TTS_AVAILABLE)
+        self.assertFalse(status["cloud_available"])
+        self.assertEqual(set(status["supported_languages"]), set(LANGUAGE_VOICE_MAP))
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ By default returns audio_url=None to signal the frontend to utilize the zero-cos
 client-side Web Speech API (speechSynthesis).
 """
 
-import os
 import logging
 from typing import Optional
 
@@ -25,22 +24,37 @@ LANGUAGE_VOICE_MAP = {
     "pa": "pa-IN",
 }
 
+TTS_MODE = "browser_speech_synthesis"
+CLOUD_TTS_AVAILABLE = False
+
+
+def get_voice_locale(lang: str) -> str:
+    """Return a configured Indian English BCP 47 locale or raise for unknown codes."""
+    normalized = lang.strip().lower()
+    try:
+        return LANGUAGE_VOICE_MAP[normalized]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported speech language code: {lang!r}") from exc
+
+
+def get_tts_status() -> dict[str, object]:
+    """Describe the real TTS availability without implying cloud service support."""
+    return {
+        "mode": TTS_MODE,
+        "cloud_available": CLOUD_TTS_AVAILABLE,
+        "supported_languages": sorted(LANGUAGE_VOICE_MAP),
+    }
+
 
 def get_speech_audio(text: str, lang: str) -> Optional[str]:
     """
-    Returns audio_url if a cloud TTS service (e.g. Bhashini / Google TTS)
-    is configured and returns an audio artifact.
-    Otherwise returns None (frontend uses browser Web Speech API).
-    """
-    # Cloud TTS can be plugged in here via BHASHINI_API_KEY
-    bhashini_key = os.getenv("BHASHINI_API_KEY")
-    if bhashini_key:
-        try:
-            # Cloud audio generation
-            return None
-        except Exception as e:
-            logger.warning(f"Cloud TTS synthesis failed: {e}")
-            return None
+    Validate the language and return None for browser speech synthesis fallback.
 
-    # Default: client-side browser synthesis
+    Cloud TTS is not implemented by this backend.
+    """
+    get_voice_locale(lang)
+    if not text:
+        return None
+
+    logger.debug("Cloud TTS is not implemented; frontend browser speech is required")
     return None
