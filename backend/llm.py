@@ -11,7 +11,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_GEMINI_MODEL = "gemini-flash-lite-latest"
 REQUEST_TIMEOUT_SECONDS = 10
 MAX_OUTPUT_CHARACTERS = 500
 _MODEL_PATTERN = re.compile(r"[A-Za-z0-9._-]+\Z")

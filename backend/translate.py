@@ -229,6 +229,39 @@ def translate_text(text: str, target_lang: str) -> str:
         _TRANSLATION_CACHE.put(cache_key, translated)
         return translated
 
+    # Check for Gemini / LLM Translation if configured
+    llm_key = os.getenv("LLM_API_KEY")
+    if llm_key:
+        try:
+            import urllib.request
+            import json
+            lang_names = {
+                "hi": "Hindi", "mr": "Marathi", "ta": "Tamil", "bn": "Bengali",
+                "te": "Telugu", "gu": "Gujarati", "kn": "Kannada", "ml": "Malayalam", "pa": "Punjabi"
+            }
+            target_name = lang_names.get(norm_target, norm_target)
+            model = os.getenv("LLM_MODEL", "gemini-flash-lite-latest")
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={llm_key}"
+            prompt = f"Translate this English sentence into {target_name}: {text}. Output only the {target_name} translated text, with no explanations or notes."
+            payload = json.dumps({
+                "contents": [{"parts": [{"text": prompt}]}]
+            }).encode("utf-8")
+
+            req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        translated = parts[0].get("text", "").strip()
+                        translated = translated.replace('"', '').replace('`', '').strip()
+                        if translated:
+                            _TRANSLATION_CACHE.put(cache_key, translated)
+                            return translated
+        except Exception as e:
+            logger.warning(f"Gemini translation failed: {e}")
+
     logger.info(
         "Offline translation unavailable for target '%s'; returning English text",
         norm_target,
