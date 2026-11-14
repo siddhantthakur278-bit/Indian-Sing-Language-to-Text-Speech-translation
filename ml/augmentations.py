@@ -20,7 +20,6 @@ def random_scale(seq: Sequence, min_scale: float = 0.9, max_scale: float = 1.1) 
     """Scale spatial coordinates x, y, z uniformly while preserving visibility."""
     scale = random.uniform(min_scale, max_scale)
     augmented = []
-
     for frame in seq:
         new_frame = list(frame)
         for i in range(len(new_frame)):
