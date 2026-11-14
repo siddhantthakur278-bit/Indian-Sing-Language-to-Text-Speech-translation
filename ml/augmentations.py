@@ -12,7 +12,7 @@ Implements realistic physical variations for 3D landmarks per AGENTS.md Section 
 import math
 import random
 from typing import List
-# hello
+
 # Type definition for a sequence of 30 frames, each with 258 landmark features
 Sequence = List[List[float]]
 
