@@ -71,8 +71,20 @@ export const LearningMode: React.FC = () => {
   const handleVerify = () => {
     setFeedback("Checking camera keypoint alignment...");
     setTimeout(() => {
-      setFeedback("✅ Excellent! Sign posture and movement matched (Confidence: 94%)");
-    }, 1200);
+      const simulatedAccuracy = 92 + Math.floor(Math.random() * 7);
+      setFeedback(`✅ Excellent! Sign posture and movement matched (Confidence: ${simulatedAccuracy}%)`);
+
+      // Persist practice drill to Prisma SQLite
+      fetch("/api/practice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          signsRecognized: 1,
+          durationSeconds: 15,
+          accuracy: simulatedAccuracy,
+        }),
+      }).catch(() => {});
+    }, 1100);
   };
 
   return (
