@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { CameraView } from "@/components/CameraView";
 import { CaptionPanel } from "@/components/CaptionPanel";
 import { LanguageSelect, SUPPORTED_LANGUAGES } from "@/components/LanguageSelect";
@@ -15,6 +15,8 @@ import { ContextPacks } from "@/components/ContextPacks";
 import { speakText, stopSpeaking } from "@/lib/speech";
 import { requestSentenceTranslation } from "@/lib/api";
 import { soundEffects } from "@/lib/audioFeedback";
+import { DetectedGesture } from "@/lib/mediapipeVision";
+import { HolisticResults } from "@/lib/landmarks";
 
 export default function Home() {
   // Application State
@@ -161,6 +163,43 @@ export default function Home() {
     }
   }, [autoSpeak, speechRate]);
 
+  // Live detection event handler from real MediaPipe vision stream
+  const lastAddedSignRef = useRef<{ sign: string; time: number }>({ sign: "", time: 0 });
+
+  const handleLiveDetection = useCallback(
+    (data: {
+      results: HolisticResults;
+      gesture: DetectedGesture | null;
+      fps: number;
+      handsDetected: boolean;
+    }) => {
+      setFps(data.fps);
+      setHandsDetected(data.handsDetected);
+
+      if (data.gesture) {
+        setDetectedSign(data.gesture.gloss);
+        setConfidence(data.gesture.confidence);
+
+        const now = performance.now();
+        // Cooldown of 1500ms and require high confidence
+        if (
+          data.gesture.confidence >= 0.88 &&
+          now - lastAddedSignRef.current.time > 1500 &&
+          (data.gesture.gloss !== lastAddedSignRef.current.sign || now - lastAddedSignRef.current.time > 3000)
+        ) {
+          lastAddedSignRef.current = { sign: data.gesture.gloss, time: now };
+          soundEffects.playSignRecognizedTone();
+          setGlosses((prev) => {
+            const next = [...prev, data.gesture!.gloss];
+            triggerTranslation(next, targetLang);
+            return next;
+          });
+        }
+      }
+    },
+    [targetLang, triggerTranslation]
+  );
+
   const handleDeleteLastGloss = () => {
     if (glosses.length > 0) {
       const nextGlosses = glosses.slice(0, -1);
@@ -253,6 +292,7 @@ export default function Home() {
                 fps={fps}
                 isActive={isCameraActive}
                 onToggleActive={() => setIsCameraActive(!isCameraActive)}
+                onLiveDetection={handleLiveDetection}
               />
             </section>
 
