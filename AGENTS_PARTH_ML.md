@@ -134,7 +134,7 @@ Default: confidence >= 0.8, 4 of last 5 predictions agree, 1 s cooldown. Report 
 
 ## 6. Vocabulary (MVP, about 60 classes)
 
-Starter list; finalise against the ISLRTC dictionary and agree with the team in week 1:
+Starter list; finalise against the ISLRTC dictionary and agree with the team on Day 1:
 
 - Greetings: `HELLO, THANK_YOU, SORRY, PLEASE, WELCOME, GOODBYE`
 - People: `ME, YOU, HE_SHE, MOTHER, FATHER, FRIEND, DOCTOR, TEACHER`
@@ -239,20 +239,20 @@ Write results to `docs/ml_evaluation.md`; every number must come from a real run
 
 ---
 
-## 10. Task list
+## 10. Task list (10-Day Accelerated Sprint)
 
-| ID | Task | Week | Done when |
+| ID | Task | Timeline | Done when |
 |---|---|---|---|
-| P1 | Study ISL basics; finalise vocabulary; create `classes.json` | W1 | Shared and approved |
-| P2 | Data collection plan, INCLUDE subset, own recordings, `metadata.csv`, `IDLE` data | W1-2 | Counts per class table |
-| P3 | `extract_keypoints.py` + batch run + quality flags | W1-2 | `.npy` files `(30,258)` created |
-| P4 | `preprocess.py`: normalize, augment, signer-wise splits, tests | W2 | Tests pass |
-| P5 | Baseline BiLSTM training | W2-3 | Model + training log |
-| P6 | Model improvements and comparison table | W3-4 | Better held-out accuracy |
-| P7 | TF.js export, quantization, `sample_io` | W3-4 | Browser-ready folder |
-| P8 | `realtime_demo.py` | W3 | Works on laptop webcam |
-| P9 | Evaluation report + model card | W4-5 | Docs with real numbers |
-| P+ | Stretch: fingerspelling (A-Z, 0-9); continuous recognition with CTC | W5-6 | Optional |
+| P1 | Study ISL basics; finalise vocabulary; create `classes.json` | Day 1 | Shared and approved |
+| P2 | Data collection plan, INCLUDE subset, own recordings, `metadata.csv`, `IDLE` data | Day 1–2 | Counts per class table |
+| P3 | `extract_keypoints.py` + batch run + quality flags | Day 2–3 | `.npy` files `(30,258)` created |
+| P4 | `preprocess.py`: normalize, augment, signer-wise splits, tests | Day 3 | Tests pass |
+| P5 | Baseline BiLSTM training | Day 4 | Model + training log |
+| P6 | Model improvements and comparison table | Day 5 | Better held-out accuracy |
+| P7 | TF.js export, quantization, `sample_io` | Day 5–6 | Browser-ready folder |
+| P8 | `realtime_demo.py` | Day 6 | Works on laptop webcam |
+| P9 | Evaluation report + model card | Day 7–8 | Docs with real numbers |
+| P+ | Stretch: fingerspelling (A-Z, 0-9); continuous recognition with CTC | Day 9–10 | Live spell studio in browser |
 
 ---
 

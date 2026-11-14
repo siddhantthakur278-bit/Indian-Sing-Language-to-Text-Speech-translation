@@ -351,7 +351,7 @@ npm run lint && npm run test && npm run build
 
 Statuses: `[ ]` to do. Update this list as you finish tasks.
 
-### Phase 1: Foundations (week 1)
+### Phase 1: Foundations (Days 1–2)
 - [x] **S1** Repo + Next.js (TypeScript, Tailwind) skeleton, folder structure, `.gitignore`, `.env.example`, README skeleton
 - [x] **S2** UI design tokens and layout (live screen, emergency, settings) matching Section 8.3
 - [x] **P1** `data/classes.json` finalised with the team (60 signs + `IDLE`)
@@ -359,7 +359,7 @@ Statuses: `[ ]` to do. Update this list as you finish tasks.
 - [x] **A1** Backend skeleton (FastAPI, `/health`, CORS, config), env handling, key test script
 - [x] **A2** `data/gloss_pairs.csv` with 200+ pairs including emergency phrases
 
-### Phase 2: Landmarks and baseline model (weeks 1-3)
+### Phase 2: Landmarks and baseline model (Days 3–4)
 - [x] **P3** `extract_keypoints.py` + batch run + quality log
 - [x] **P4** `preprocess.py` (normalize, augment, signer-wise split)
 - [x] **P5** Baseline BiLSTM training + evaluation
@@ -367,7 +367,7 @@ Statuses: `[ ]` to do. Update this list as you finish tasks.
 - [x] **S4** `normalize.ts` + unit test against `sample_io.npz`
 - [x] **A3** `gloss_to_text.py` rules + LLM + tests
 
-### Phase 3: Real-time and integration (weeks 3-4)
+### Phase 3: Real-time and integration (Days 5–6)
 - [x] **P7** Export to TF.js + `sample_io.npz`
 - [x] **P8** `realtime_demo.py` (OpenCV fallback)
 - [x] **S5** Browser inference in a Web Worker with threshold, voting, cooldown, `IDLE`
@@ -377,7 +377,7 @@ Statuses: `[ ]` to do. Update this list as you finish tasks.
 - [x] **S7** Next.js API route proxy + loading/error/offline states
 - [x] **A6** TTS (browser fallback + optional cloud)
 
-### Phase 4: Quality and polish (weeks 4-5)
+### Phase 4: Quality and polish (Days 7–8)
 - [x] **P6** Model improvements (CNN+BiLSTM / Transformer, velocity features)
 - [x] **P9** Evaluation report (per-class F1, unseen signers, latency)
 - [x] **S8** Emergency bar + accessibility pass
@@ -386,9 +386,10 @@ Statuses: `[ ]` to do. Update this list as you finish tasks.
 - [x] **A8** Testing with 5+ users, lighting/device tests, bug log
 - [x] **A9** Docs: README, API docs, architecture, privacy statement, credits
 
-### Phase 5: Demo and stretch (week 6)
+### Phase 5: Demo, Evaluation & Stretch (Days 9–10)
 - [x] **S10** Demo video + real screenshots
-- [x] **Stretch**: fingerspelling, continuous recognition (CTC), two-way mode (speech to text to sign videos), learning mode
+- [x] **S10.1** Fingerspelling classifier (A–Z, 1–9) & live webcam spell studio
+- [x] **Stretch**: continuous recognition (CTC), two-way mode (speech to text to sign videos), learning mode
 
 ---
 
