@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Volume2, VolumeX, Sparkles, Bookmark, Check, Trash2, ArrowRight } from "lucide-react";
+import { AudioWaveform } from "@/components/AudioWaveform";
 
 interface CaptionPanelProps {
   glosses: string[];
@@ -139,6 +140,9 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({
               <Volume2 className="w-4 h-4" />
               <span>{isSpeaking ? "Speaking..." : "Speak Translation (S)"}</span>
             </button>
+
+            {/* Live Audio Equalizer Waveform */}
+            <AudioWaveform isActive={isSpeaking} />
 
             {translatedSentence && (
               <button
