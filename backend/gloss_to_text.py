@@ -138,7 +138,7 @@ def convert_glosses_with_rules(glosses: List[str]) -> Tuple[Optional[str], bool]
 def query_llm_for_sentence(gloss_str: str) -> Optional[str]:
     """Use Gemini only for non-emergency glosses; leave failure to safe fallback."""
     prompt = LLM_PROMPT_TEMPLATE.format(glosses=gloss_str)
-    return generate_text(prompt)
+    return generate_text(prompt, source_glosses=gloss_str.split())
 
 
 def glosses_to_sentence(glosses: List[str]) -> Tuple[str, bool]:

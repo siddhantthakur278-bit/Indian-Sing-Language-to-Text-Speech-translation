@@ -33,7 +33,10 @@ uvicorn backend.main:app --reload --port 8000
 The Gemini adapter calls the documented `generateContent` REST method with the
 API key in `x-goog-api-key`, not in the URL. It uses a 10-second timeout and
 returns to deterministic local behavior for missing credentials, transport
-errors, blocked/incomplete output, or invalid output.
+errors, blocked/incomplete output, or invalid output. Candidate content words
+must be licensed by at least one source gloss; if a source gloss has no
+grounding mapping or the candidate introduces an unsupported word, the candidate
+is discarded and deterministic local behavior is used.
 
 References checked for adapter formats:
 
