@@ -12,6 +12,15 @@ from backend import main as main_module
 client = TestClient(main_module.app)
 
 
+@pytest.fixture(autouse=True)
+def clear_api_state():
+    main_module.response_cache.clear()
+    main_module.rate_limiter.clear()
+    yield
+    main_module.response_cache.clear()
+    main_module.rate_limiter.clear()
+
+
 def test_health_check_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
