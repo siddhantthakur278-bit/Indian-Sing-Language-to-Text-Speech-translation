@@ -40,12 +40,13 @@ export async function POST(req: NextRequest) {
     if (isEmergency) {
       sentence = "Emergency! Please help me immediately.";
       translated = targetLang === "hi" ? "कृपया तुरंत मेरी सहायता करें, यह एक आपात स्थिति है।" : sentence;
+      const audioUrl = `/api/tts?text=${encodeURIComponent(translated)}&lang=${encodeURIComponent(targetLang)}`;
       return NextResponse.json({
         sentence,
         translated,
         lang: targetLang,
         emergency: true,
-        audio_url: null,
+        audio_url: audioUrl,
       });
     }
 
@@ -79,12 +80,13 @@ Glosses: ${glosses.join(" ")}`;
           if (rawText) {
             const parsed = JSON.parse(rawText);
             if (parsed.sentence && parsed.translated) {
+              const audioUrl = `/api/tts?text=${encodeURIComponent(parsed.translated)}&lang=${encodeURIComponent(targetLang)}`;
               return NextResponse.json({
                 sentence: parsed.sentence,
                 translated: parsed.translated,
                 lang: targetLang,
                 emergency: false,
-                audio_url: null,
+                audio_url: audioUrl,
               });
             }
           }
@@ -94,12 +96,13 @@ Glosses: ${glosses.join(" ")}`;
       }
     }
 
+    const fallbackAudioUrl = `/api/tts?text=${encodeURIComponent(translated)}&lang=${encodeURIComponent(targetLang)}`;
     return NextResponse.json({
       sentence,
       translated,
       lang: targetLang,
       emergency: false,
-      audio_url: null,
+      audio_url: fallbackAudioUrl,
       fallback: true,
     });
   } catch (error: any) {

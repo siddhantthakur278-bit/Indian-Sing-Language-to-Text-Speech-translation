@@ -13,7 +13,7 @@ from threading import Lock
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from .cache import ResponseCache
 from .config import settings
@@ -26,7 +26,7 @@ from .schemas import (
     TextToGlossResponse,
 )
 from .translate import TRANSLATION_MODE, TranslationProviderError, translate_text
-from .tts import get_speech_audio, get_tts_status
+from .tts import get_speech_audio, get_tts_status, synthesize_audio_bytes
 from .vocabulary import VocabularyValidationError, validate_glosses
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -219,6 +219,19 @@ async def process_sentence(
     )
     response_cache.put(cache_key, response.model_dump())
     return response
+
+
+@app.get("/api/tts", tags=["TTS"])
+async def stream_tts_audio(text: str, lang: str = "hi"):
+    """Stream speech audio bytes for Indian languages."""
+    audio_bytes = synthesize_audio_bytes(text, lang)
+    if not audio_bytes:
+        return JSONResponse(status_code=502, content={"message": "Failed to synthesize speech audio"})
+    return Response(
+        content=audio_bytes,
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.post(
