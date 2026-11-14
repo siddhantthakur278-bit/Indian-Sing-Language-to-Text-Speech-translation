@@ -109,13 +109,13 @@ export const TwoWayChat: React.FC<TwoWayChatProps> = ({ onSpeak }) => {
   };
 
   return (
-    <div className="w-full flex flex-col h-[560px] bg-navy border border-slate-700 rounded-2xl overflow-hidden shadow-2xl">
+    <div className="w-full flex flex-col h-[560px] bg-space-900 border border-gold-500/25 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-xl">
       {/* Header */}
-      <div className="p-4 bg-navy-dark border-b border-slate-700 flex items-center justify-between">
+      <div className="p-4 bg-space-950 border-b border-space-800 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <span>💬 Two-Way Communication Bridge</span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal/20 text-teal-light border border-teal/30">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/30">
               Deaf ↔ Hearing
             </span>
           </h3>
@@ -126,7 +126,7 @@ export const TwoWayChat: React.FC<TwoWayChatProps> = ({ onSpeak }) => {
       </div>
 
       {/* Message Transcript */}
-      <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3.5 bg-slate-950/40">
+      <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3.5 bg-space-950/60">
         {messages.map((m) => (
           <div
             key={m.id}
@@ -140,18 +140,18 @@ export const TwoWayChat: React.FC<TwoWayChatProps> = ({ onSpeak }) => {
             <div
               className={`p-3.5 rounded-2xl text-sm ${
                 m.sender === "signer"
-                  ? "bg-navy-light text-white border border-slate-700 rounded-tl-sm shadow"
-                  : "bg-teal/20 text-white border border-teal/40 rounded-tr-sm shadow"
+                  ? "bg-space-850 text-white border border-gold-500/30 rounded-tl-sm shadow"
+                  : "bg-ruby-950/60 text-white border border-ruby-500/40 rounded-tr-sm shadow"
               }`}
             >
               <p className="font-medium">{m.text}</p>
               {m.glosses && m.glosses.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-slate-700/60 flex flex-wrap gap-1.5 items-center">
-                  <span className="text-[10px] font-bold uppercase text-slate-400">ISL Glosses:</span>
+                <div className="mt-2 pt-2 border-t border-space-700/60 flex flex-wrap gap-1.5 items-center">
+                  <span className="text-[10px] font-bold uppercase text-gold-400">ISL Glosses:</span>
                   {m.glosses.map((g, idx) => (
                     <span
                       key={idx}
-                      className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-navy-dark text-teal-light border border-teal/30"
+                      className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-space-950 text-gold-300 border border-gold-500/30"
                     >
                       {g}
                     </span>
@@ -164,13 +164,13 @@ export const TwoWayChat: React.FC<TwoWayChatProps> = ({ onSpeak }) => {
       </div>
 
       {/* Hearing User Speech Input Bar */}
-      <div className="p-3.5 bg-navy-dark border-t border-slate-700 flex items-center gap-2">
+      <div className="p-3.5 bg-space-950 border-t border-space-800 flex items-center gap-2">
         <button
           onClick={startSpeechRecognition}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition shadow ${
             isListening
-              ? "bg-alert-red text-white animate-pulse"
-              : "bg-teal hover:bg-teal-light text-navy-dark"
+              ? "bg-ruby-500 text-white animate-pulse"
+              : "bg-gradient-to-r from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-space-950"
           }`}
           title="Click to speak using microphone"
         >
@@ -185,12 +185,12 @@ export const TwoWayChat: React.FC<TwoWayChatProps> = ({ onSpeak }) => {
             if (e.key === "Enter") handleSendHearingMessage(inputText);
           }}
           placeholder="Hearing user types or speaks here..."
-          className="flex-1 bg-navy text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-teal"
+          className="flex-1 bg-space-850 text-white text-xs px-3.5 py-2.5 rounded-xl border border-space-700 focus:outline-none focus:border-gold-500"
         />
 
         <button
           onClick={() => handleSendHearingMessage(inputText)}
-          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition"
+          className="px-4 py-2.5 rounded-xl bg-space-800 hover:bg-space-700 text-gold-300 text-xs font-bold transition border border-space-700 hover:border-gold-500/40"
         >
           Send
         </button>

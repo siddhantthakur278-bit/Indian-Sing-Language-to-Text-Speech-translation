@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Globe } from "lucide-react";
 
 export interface LanguageOption {
   code: string;
@@ -29,17 +30,20 @@ interface LanguageSelectProps {
 export const LanguageSelect: React.FC<LanguageSelectProps> = ({ selectedCode, onChange }) => {
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="lang-select" className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-        Target:
-      </label>
+      <div className="flex items-center gap-1.5 text-gold-400">
+        <Globe className="w-4 h-4" />
+        <label htmlFor="lang-select" className="text-xs font-bold uppercase tracking-wider text-slate-300 hidden sm:inline">
+          Target:
+        </label>
+      </div>
       <select
         id="lang-select"
         value={selectedCode}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-navy-light text-white text-sm font-medium border border-slate-700 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal cursor-pointer shadow-inner"
+        className="bg-space-850 text-white text-xs font-bold border border-gold-500/30 rounded-xl px-3 py-1.5 focus:outline-none focus:border-gold-400 cursor-pointer shadow-md hover:border-gold-400 transition"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
-          <option key={lang.code} value={lang.code} className="bg-navy text-white">
+          <option key={lang.code} value={lang.code} className="bg-space-950 text-white font-medium">
             {lang.name} ({lang.nativeName})
           </option>
         ))}

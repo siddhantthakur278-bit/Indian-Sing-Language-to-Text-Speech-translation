@@ -1,0 +1,62 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String              @id @default(cuid())
+  name           String              @default("Siddhant")
+  email          String?             @unique
+  avatarUrl      String?
+  role           String              @default("Signer") // "Signer" | "Interpreter" | "Learner"
+  preferredLang  String              @default("hi")
+  speechRate     Float               @default(1.0)
+  autoSpeak      Boolean             @default(true)
+  signMode       String              @default("auto") // "auto" | "hold"
+  theme          String              @default("galaxy-gold")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  translations   TranslationRecord[]
+  savedPhrases   SavedPhrase[]
+  sessions       PracticeSession[]
+}
+
+model TranslationRecord {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  glosses    String   // Stored as JSON string array e.g. '["HELLO","FRIEND"]'
+  english    String
+  translated String
+  lang       String
+  isEmergency Boolean @default(false)
+  audioUrl   String?
+  createdAt  DateTime @default(now())
+}
+
+model SavedPhrase {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  glosses   String   // JSON string array e.g. '["ME","WATER","WANT"]'
+  english   String
+  translated String
+  category  String   @default("General") // "Emergency", "Medical", "Greetings", "Daily"
+  shortcut  String?
+  createdAt DateTime @default(now())
+}
+
+model PracticeSession {
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signsRecognized Int      @default(0)
+  durationSeconds Int      @default(0)
+  accuracy        Float    @default(0.0)
+  createdAt       DateTime @default(now())
+}

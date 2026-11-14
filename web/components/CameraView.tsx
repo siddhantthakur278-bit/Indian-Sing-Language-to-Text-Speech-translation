@@ -153,7 +153,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   }, [isActive, runDetectionLoop]);
 
   return (
-    <div className="relative w-full aspect-[4/3] bg-navy-dark rounded-2xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col items-center justify-center">
+    <div className="relative w-full aspect-[4/3] bg-space-950 rounded-2xl overflow-hidden border border-gold-500/30 shadow-2xl flex flex-col items-center justify-center">
       {isActive && (
         <video
           ref={videoRef}
@@ -170,13 +170,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
       />
 
       {/* Top Status Bar Chips */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md ${
               localHandsDetected
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50"
+                : "bg-amber-500/20 text-amber-300 border border-amber-500/50"
             }`}
           >
             <span
@@ -184,25 +184,25 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 localHandsDetected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
               }`}
             />
-            {localHandsDetected ? "Hands Detected" : "No Hands Detected"}
+            {localHandsDetected ? "Hands Detected" : "Hands Resting"}
           </span>
 
-          <span className="px-2.5 py-1 rounded-full text-xs font-mono bg-slate-900/80 text-slate-300 border border-slate-700">
+          <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-space-900/90 text-gold-300 border border-gold-500/30">
             {localFps} FPS
           </span>
 
           {isVisionLoading && (
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-teal/20 text-teal-light border border-teal/40 animate-pulse">
-              Loading AI Skeleton...
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-gold-500/20 text-gold-300 border border-gold-500/40 animate-pulse">
+              Loading AI Engine...
             </span>
           )}
         </div>
 
         {detectedSign && (
-          <div className="px-4 py-1.5 rounded-full text-sm font-bold bg-teal text-navy-dark border border-teal-light shadow-lg flex items-center gap-2 animate-bounce">
-            <span>Sign:</span>
-            <span className="tracking-wide uppercase">{detectedSign}</span>
-            <span className="text-xs bg-navy-dark/30 px-1.5 py-0.5 rounded text-white font-mono">
+          <div className="px-3.5 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-gold-400 to-gold-500 text-space-950 border border-gold-300 shadow-lg shadow-gold-500/30 flex items-center gap-2 animate-bounce">
+            <span className="text-[10px] uppercase tracking-wider text-space-900">Sign:</span>
+            <span className="tracking-wide uppercase font-black">{detectedSign}</span>
+            <span className="text-[10px] bg-space-950 px-1.5 py-0.5 rounded text-gold-300 font-mono">
               {Math.round(confidence * 100)}%
             </span>
           </div>
@@ -210,26 +210,26 @@ export const CameraView: React.FC<CameraViewProps> = ({
       </div>
 
       {/* Camera Guidance Notice */}
-      <div className="absolute bottom-4 left-4 z-10 px-3 py-1.5 rounded-lg bg-slate-900/80 backdrop-blur text-xs text-slate-300 border border-slate-700">
-        Live MediaPipe Tracking • Upper Body &amp; Hand Joints Active
+      <div className="absolute bottom-4 left-4 z-10 px-3 py-1.5 rounded-lg bg-space-900/90 backdrop-blur text-[11px] text-slate-300 border border-gold-500/20">
+        MediaPipe Holistic Landmark Engine &bull; Upper Body &amp; 42 Hand Joints Active
       </div>
 
       {/* Placeholder / Error State */}
       {(!isActive || cameraError) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-navy-dark/95 z-20">
-          <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4 text-slate-400">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-space-950/95 z-20">
+          <div className="w-16 h-16 rounded-full bg-space-850 border border-gold-500/30 flex items-center justify-center mb-4 text-gold-400 text-2xl">
             📷
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className="text-lg font-bold text-white mb-2">
             {cameraError ? "Camera Error" : "Camera is Paused"}
           </h3>
-          <p className="text-sm text-slate-400 max-w-sm mb-6">
+          <p className="text-xs text-slate-400 max-w-sm mb-6">
             {cameraError ||
               "Enable camera access to begin real-time Indian Sign Language recognition."}
           </p>
           <button
             onClick={onToggleActive}
-            className="px-6 py-2.5 rounded-xl font-medium bg-teal hover:bg-teal-light text-navy-dark transition-all duration-200 shadow-md font-semibold"
+            className="px-6 py-2.5 rounded-xl font-bold bg-gradient-to-r from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-space-950 transition-all duration-200 shadow-lg"
           >
             {isActive ? "Retry Camera" : "Start Camera"}
           </button>
