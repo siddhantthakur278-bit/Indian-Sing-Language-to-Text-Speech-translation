@@ -21,19 +21,46 @@ import { HolisticResults } from "@/lib/landmarks";
 export default function Home() {
   // Application State
   const [isCameraActive, setIsCameraActive] = useState<boolean>(true);
-  const [detectedSign, setDetectedSign] = useState<string | null>("HELLO");
-  const [confidence, setConfidence] = useState<number>(0.94);
-  const [handsDetected, setHandsDetected] = useState<boolean>(true);
+  const [detectedSign, setDetectedSign] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<number>(0);
+  const [handsDetected, setHandsDetected] = useState<boolean>(false);
   const [fps, setFps] = useState<number>(30);
   const [activeTab, setActiveTab] = useState<"live" | "twoway" | "learning" | "fingerspelling" | "context">("live");
 
   // Linguistic & Translation State
   const [targetLang, setTargetLang] = useState<string>("hi");
-  const [glosses, setGlosses] = useState<string[]>(["ME", "HOSPITAL", "GO"]);
-  const [englishSentence, setEnglishSentence] = useState<string>("I am going to the hospital.");
-  const [translatedSentence, setTranslatedSentence] = useState<string>("मैं अस्पताल जा रहा हूँ।");
+  const [glosses, setGlosses] = useState<string[]>([]);
+  const [englishSentence, setEnglishSentence] = useState<string>("");
+  const [translatedSentence, setTranslatedSentence] = useState<string>("");
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [signMode, setSignMode] = useState<"auto" | "hold">("auto");
+  const [isHoldingSpace, setIsHoldingSpace] = useState<boolean>(false);
+
+  // Synchronized refs to avoid stale closures in timeouts and callbacks
+  const glossesRef = useRef<string[]>([]);
+  useEffect(() => {
+    glossesRef.current = glosses;
+  }, [glosses]);
+
+  const targetLangRef = useRef<string>(targetLang);
+  useEffect(() => {
+    targetLangRef.current = targetLang;
+  }, [targetLang]);
+
+  const signModeRef = useRef<"auto" | "hold">("auto");
+  useEffect(() => {
+    signModeRef.current = signMode;
+  }, [signMode]);
+
+  const isHoldingSpaceRef = useRef<boolean>(false);
+  useEffect(() => {
+    isHoldingSpaceRef.current = isHoldingSpace;
+  }, [isHoldingSpace]);
+
+  const sentenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastAddedSignRef = useRef<{ sign: string; time: number }>({ sign: "", time: 0 });
+  const isSentenceFinalizedRef = useRef<boolean>(false);
 
   // History & Settings
   const [history, setHistory] = useState<HistoryItem[]>([
@@ -100,34 +127,16 @@ export default function Home() {
 
   const handleClear = useCallback(() => {
     stopSpeaking();
+    if (sentenceTimerRef.current) {
+      clearTimeout(sentenceTimerRef.current);
+      sentenceTimerRef.current = null;
+    }
     setGlosses([]);
     setEnglishSentence("");
     setTranslatedSentence("");
     setIsSpeaking(false);
+    isSentenceFinalizedRef.current = false;
   }, []);
-
-  // Global keyboard shortcuts for accessibility
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is focusing an input or select
-      if (["INPUT", "SELECT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) {
-        return;
-      }
-      if (e.key === " " || e.code === "Space") {
-        e.preventDefault();
-        setIsCameraActive((prev) => !prev);
-      } else if (e.key === "s" || e.key === "S") {
-        handleSpeak();
-      } else if (e.key === "c" || e.key === "C") {
-        handleClear();
-      } else if (e.key === "e" || e.key === "E") {
-        handleEmergencyTrigger("Please help me immediately!", "कृपया तुरंत मेरी सहायता करें!");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSpeak, handleClear, handleEmergencyTrigger]);
 
   const triggerTranslation = useCallback(async (currentGlosses: string[], lang: string) => {
     if (currentGlosses.length === 0) return;
@@ -163,9 +172,54 @@ export default function Home() {
     }
   }, [autoSpeak, speechRate]);
 
-  // Live detection event handler from real MediaPipe vision stream
-  const lastAddedSignRef = useRef<{ sign: string; time: number }>({ sign: "", time: 0 });
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (["INPUT", "SELECT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+      if (e.key === " " || e.code === "Space") {
+        if (!e.repeat) {
+          e.preventDefault();
+          if (signModeRef.current === "hold") {
+            setIsHoldingSpace(true);
+          }
+        }
+      } else if (e.key === "s" || e.key === "S") {
+        handleSpeak();
+      } else if (e.key === "c" || e.key === "C") {
+        handleClear();
+      } else if (e.key === "e" || e.key === "E") {
+        handleEmergencyTrigger("Please help me immediately!", "कृपया तुरंत मेरी सहायता करें!");
+      }
+    };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (["INPUT", "SELECT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        if (signModeRef.current === "hold") {
+          setIsHoldingSpace(false);
+          // When releasing spacebar in hold mode, finalize and translate accumulated glosses
+          if (glossesRef.current.length > 0) {
+            isSentenceFinalizedRef.current = true;
+            triggerTranslation(glossesRef.current, targetLangRef.current);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [handleSpeak, handleClear, handleEmergencyTrigger, triggerTranslation]);
+
+  // Live detection event handler from real MediaPipe vision stream
   const handleLiveDetection = useCallback(
     (data: {
       results: HolisticResults;
@@ -176,28 +230,62 @@ export default function Home() {
       setFps(data.fps);
       setHandsDetected(data.handsDetected);
 
+      // In "hold" mode: ignore detections unless Space is actively held
+      if (signModeRef.current === "hold" && !isHoldingSpaceRef.current) {
+        setDetectedSign(null);
+        return;
+      }
+
       if (data.gesture) {
         setDetectedSign(data.gesture.gloss);
         setConfidence(data.gesture.confidence);
 
+        // Cancel any pending end-of-sentence timer while user is actively signing
+        if (sentenceTimerRef.current) {
+          clearTimeout(sentenceTimerRef.current);
+          sentenceTimerRef.current = null;
+        }
+
         const now = performance.now();
-        // Cooldown of 1500ms and require high confidence
+        // Cooldown between adding signs: 1200ms; same sign: 2500ms
         if (
           data.gesture.confidence >= 0.88 &&
-          now - lastAddedSignRef.current.time > 1500 &&
-          (data.gesture.gloss !== lastAddedSignRef.current.sign || now - lastAddedSignRef.current.time > 3000)
+          now - lastAddedSignRef.current.time > 1200 &&
+          (data.gesture.gloss !== lastAddedSignRef.current.sign || now - lastAddedSignRef.current.time > 2500)
         ) {
           lastAddedSignRef.current = { sign: data.gesture.gloss, time: now };
           soundEffects.playSignRecognizedTone();
+
           setGlosses((prev) => {
-            const next = [...prev, data.gesture!.gloss];
-            triggerTranslation(next, targetLang);
-            return next;
+            if (isSentenceFinalizedRef.current) {
+              isSentenceFinalizedRef.current = false;
+              return [data.gesture!.gloss];
+            }
+            return [...prev, data.gesture!.gloss];
           });
+        }
+      } else {
+        // No gesture active (hands resting / IDLE)
+        setDetectedSign(null);
+
+        // In auto mode: when hands drop and stay idle for 1.5s, finalize sentence and speak ONCE
+        if (
+          signModeRef.current === "auto" &&
+          glossesRef.current.length > 0 &&
+          !sentenceTimerRef.current &&
+          !isSentenceFinalizedRef.current
+        ) {
+          sentenceTimerRef.current = setTimeout(() => {
+            if (glossesRef.current.length > 0) {
+              isSentenceFinalizedRef.current = true;
+              triggerTranslation(glossesRef.current, targetLangRef.current);
+            }
+            sentenceTimerRef.current = null;
+          }, 1500);
         }
       }
     },
-    [targetLang, triggerTranslation]
+    [triggerTranslation]
   );
 
   const handleDeleteLastGloss = () => {
@@ -285,6 +373,66 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fadeIn">
             {/* Left: Camera Feed & Skeleton Detection */}
             <section className="lg:col-span-7 flex flex-col gap-3">
+              {/* Signing Mode Selector & Push-To-Sign Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/70 shadow-sm">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-400">Mode:</span>
+                  <button
+                    onClick={() => setSignMode("auto")}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                      signMode === "auto"
+                        ? "bg-teal text-navy-dark shadow-sm"
+                        : "bg-slate-800 text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    ✨ Hands-Free Auto
+                  </button>
+                  <button
+                    onClick={() => setSignMode("hold")}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                      signMode === "hold"
+                        ? "bg-accent-orange text-navy-dark shadow-sm"
+                        : "bg-slate-800 text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    ⌨️ Push to Sign (Space)
+                  </button>
+                </div>
+
+                {signMode === "hold" ? (
+                  <button
+                    onMouseDown={() => setIsHoldingSpace(true)}
+                    onMouseUp={() => {
+                      setIsHoldingSpace(false);
+                      if (glossesRef.current.length > 0) {
+                        isSentenceFinalizedRef.current = true;
+                        triggerTranslation(glossesRef.current, targetLangRef.current);
+                      }
+                    }}
+                    onTouchStart={() => setIsHoldingSpace(true)}
+                    onTouchEnd={() => {
+                      setIsHoldingSpace(false);
+                      if (glossesRef.current.length > 0) {
+                        isSentenceFinalizedRef.current = true;
+                        triggerTranslation(glossesRef.current, targetLangRef.current);
+                      }
+                    }}
+                    className={`px-3.5 py-1 rounded-lg text-xs font-bold transition select-none flex items-center gap-1.5 ${
+                      isHoldingSpace
+                        ? "bg-emerald-500 text-white animate-pulse"
+                        : "bg-slate-800 text-slate-200 border border-slate-600 hover:bg-slate-700 active:bg-emerald-600"
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${isHoldingSpace ? "bg-white" : "bg-emerald-400"}`} />
+                    {isHoldingSpace ? "Recording Sign... Release when done" : "Hold Space or Click Here to Sign"}
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-slate-400 hidden sm:inline">
+                    Sign freely &bull; Lower hands 1.5s to translate
+                  </span>
+                )}
+              </div>
+
               <CameraView
                 detectedSign={detectedSign}
                 confidence={confidence}

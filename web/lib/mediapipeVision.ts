@@ -35,6 +35,8 @@ export class LiveVisionTracker {
 
   // History for temporal motion detection (e.g. waving hello, moving to mouth)
   private previousHandPositions: Array<{ x: number; y: number; time: number }> = [];
+  // Buffer for temporal consensus voting to eliminate spurious frames
+  private consensusBuffer: Array<string | null> = [];
 
   public async initialize(): Promise<boolean> {
     if (this.isReady) return true;
@@ -210,8 +212,30 @@ export class LiveVisionTracker {
 
   /**
    * Anatomical and kinematic gesture classifier for real-time ISL vocabulary
+   * Strict IDLE filtering and multi-frame consensus
    */
   private classifyLiveGesture(results: HolisticResults, timestamp: number): DetectedGesture | null {
+    const rawCandidate = this.evaluateCandidateGesture(results, timestamp);
+
+    // Multi-frame consensus voting: require 4 out of last 5 frames to agree
+    this.consensusBuffer.push(rawCandidate ? rawCandidate.gloss : null);
+    if (this.consensusBuffer.length > 5) {
+      this.consensusBuffer.shift();
+    }
+
+    if (!rawCandidate) {
+      return null;
+    }
+
+    const matchingCount = this.consensusBuffer.filter((g) => g === rawCandidate.gloss).length;
+    if (matchingCount >= 4) {
+      return rawCandidate;
+    }
+
+    return null;
+  }
+
+  private evaluateCandidateGesture(results: HolisticResults, timestamp: number): DetectedGesture | null {
     const hand = results.rightHandLandmarks || results.leftHandLandmarks;
     const pose = results.poseLandmarks;
 
@@ -226,12 +250,44 @@ export class LiveVisionTracker {
     const ringTip = hand[16];
     const pinkyTip = hand[20];
 
+    const midShoulderY = pose && pose[11] && pose[12] ? (pose[11].y + pose[12].y) / 2 : 0.45;
+    const midShoulderX = pose && pose[11] && pose[12] ? (pose[11].x + pose[12].x) / 2 : 0.5;
+    const nose = pose && pose[0] ? pose[0] : { x: 0.5, y: 0.25 };
+
+    // 0. STRICT IDLE FILTER:
+    // If hand is resting low on desk/lap (wrist below midShoulder by > 0.18, or y > 0.70), it is IDLE
+    if (wrist.y > midShoulderY + 0.18 || wrist.y > 0.70) {
+      return null;
+    }
+
+    // Record motion history
+    this.previousHandPositions.push({ x: wrist.x, y: wrist.y, time: timestamp });
+    if (this.previousHandPositions.length > 15) {
+      this.previousHandPositions.shift();
+    }
+
+    // Compute recent horizontal and overall motion
+    let horizontalDelta = 0;
+    let totalMovement = 0;
+    if (this.previousHandPositions.length >= 8) {
+      const first = this.previousHandPositions[0];
+      const last = this.previousHandPositions[this.previousHandPositions.length - 1];
+      horizontalDelta = Math.abs(last.x - first.x);
+
+      for (let i = 1; i < this.previousHandPositions.length; i++) {
+        totalMovement += Math.hypot(
+          this.previousHandPositions[i].x - this.previousHandPositions[i - 1].x,
+          this.previousHandPositions[i].y - this.previousHandPositions[i - 1].y
+        );
+      }
+    }
+
     // Compute finger extensions (distance from tip to wrist vs MCP knuckle to wrist)
-    const isIndexExtended = indexTip.y < hand[6].y;
-    const isMiddleExtended = middleTip.y < hand[10].y;
-    const isRingExtended = ringTip.y < hand[14].y;
-    const isPinkyExtended = pinkyTip.y < hand[18].y;
-    const isThumbExtended = Math.abs(thumbTip.x - wrist.x) > Math.abs(hand[2].x - wrist.x);
+    const isIndexExtended = indexTip.y < hand[6].y - 0.02;
+    const isMiddleExtended = middleTip.y < hand[10].y - 0.02;
+    const isRingExtended = ringTip.y < hand[14].y - 0.02;
+    const isPinkyExtended = pinkyTip.y < hand[18].y - 0.02;
+    const isThumbExtended = Math.abs(thumbTip.x - wrist.x) > Math.abs(hand[2].x - wrist.x) + 0.02;
 
     const extendedFingerCount =
       (isIndexExtended ? 1 : 0) +
@@ -239,85 +295,77 @@ export class LiveVisionTracker {
       (isRingExtended ? 1 : 0) +
       (isPinkyExtended ? 1 : 0);
 
-    const midShoulderY = pose && pose[11] && pose[12] ? (pose[11].y + pose[12].y) / 2 : 0.45;
-    const midShoulderX = pose && pose[11] && pose[12] ? (pose[11].x + pose[12].x) / 2 : 0.5;
-    const nose = pose && pose[0] ? pose[0] : { x: 0.5, y: 0.25 };
-
-    // Record motion history for wave detection
-    this.previousHandPositions.push({ x: wrist.x, y: wrist.y, time: timestamp });
-    if (this.previousHandPositions.length > 15) {
-      this.previousHandPositions.shift();
-    }
-
-    // Calculate recent horizontal hand velocity (for waving)
-    let horizontalDelta = 0;
-    if (this.previousHandPositions.length >= 8) {
-      const first = this.previousHandPositions[0];
-      const last = this.previousHandPositions[this.previousHandPositions.length - 1];
-      horizontalDelta = Math.abs(last.x - first.x);
-    }
-
-    // 1. GREETING: HELLO / GOODBYE (Hand raised above shoulder and waving or open)
-    if (wrist.y < midShoulderY && extendedFingerCount >= 3) {
-      if (horizontalDelta > 0.08) {
-        return { gloss: "HELLO", confidence: 0.95 };
-      }
-      if (wrist.y < nose.y + 0.1) {
-        return { gloss: "HELLO", confidence: 0.91 };
-      }
-    }
-
-    // 2. EMERGENCY: HELP / SOS (Both hands up or high open palm)
+    // 1. EMERGENCY: HELP / SOS (Both hands held up above chest with open palms)
     if (results.leftHandLandmarks && results.rightHandLandmarks) {
       const leftWrist = results.leftHandLandmarks[0];
       const rightWrist = results.rightHandLandmarks[0];
-      if (leftWrist.y < midShoulderY && rightWrist.y < midShoulderY) {
+      if (leftWrist.y < midShoulderY + 0.05 && rightWrist.y < midShoulderY + 0.05) {
         return { gloss: "HELP", confidence: 0.96 };
       }
     }
 
-    // 3. STOP (All 4 fingers pointing straight up, palm forward)
-    if (extendedFingerCount >= 4 && wrist.y > midShoulderY - 0.1 && wrist.y < midShoulderY + 0.25) {
-      return { gloss: "STOP", confidence: 0.92 };
+    // 2. GREETING: HELLO (Hand raised above shoulder level AND actively waving side-to-side)
+    if (wrist.y < midShoulderY - 0.05 && extendedFingerCount >= 3) {
+      if (horizontalDelta > 0.08) {
+        return { gloss: "HELLO", confidence: 0.95 };
+      }
+      // If hand is raised high near head and open, require clear horizontal motion
+      if (wrist.y < nose.y + 0.05 && middleTip.y < wrist.y - 0.12 && horizontalDelta > 0.04) {
+        return { gloss: "HELLO", confidence: 0.91 };
+      }
     }
 
-    // 4. ME (Index finger pointing inward to chest center)
+    // 3. STOP (All 4 fingers pointing straight up, palm forward, steady in upper chest region)
+    const isPalmVertical = middleTip.y < wrist.y - 0.12;
+    if (
+      extendedFingerCount >= 4 &&
+      isPalmVertical &&
+      wrist.y > midShoulderY - 0.08 &&
+      wrist.y < midShoulderY + 0.12 &&
+      totalMovement < 0.10 // Steady, deliberate hold
+    ) {
+      return { gloss: "STOP", confidence: 0.93 };
+    }
+
+    // 4. ME (Index finger pointing inward and touching/approaching center of chest)
     if (isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended) {
       const distToChest = Math.hypot(indexTip.x - midShoulderX, indexTip.y - midShoulderY);
-      if (distToChest < 0.18) {
-        return { gloss: "ME", confidence: 0.93 };
+      if (distToChest < 0.13) {
+        return { gloss: "ME", confidence: 0.94 };
       }
-      // YOU (Index finger pointing forward away from chest)
-      return { gloss: "YOU", confidence: 0.89 };
+      // YOU (Index finger pointing forward away from body with arm extended)
+      if (indexTip.y < wrist.y && Math.abs(indexTip.x - midShoulderX) > 0.12 && distToChest > 0.20) {
+        return { gloss: "YOU", confidence: 0.90 };
+      }
     }
 
-    // 5. THANK_YOU (Fingers near chin/mouth area)
+    // 5. THANK_YOU (Fingers flat near chin/mouth and moving slightly forward)
     const distToMouth = Math.hypot(indexTip.x - nose.x, indexTip.y - (nose.y + 0.08));
-    if (distToMouth < 0.12 && extendedFingerCount >= 3) {
+    if (distToMouth < 0.10 && extendedFingerCount >= 3 && wrist.y < midShoulderY) {
       return { gloss: "THANK_YOU", confidence: 0.94 };
     }
 
-    // 6. WATER / DRINK (Thumb near mouth)
+    // 6. WATER / DRINK (Thumb tip touching mouth, other 4 fingers curled down)
     const thumbDistToMouth = Math.hypot(thumbTip.x - nose.x, thumbTip.y - (nose.y + 0.08));
-    if (thumbDistToMouth < 0.12 && isThumbExtended && extendedFingerCount <= 1) {
-      return { gloss: "WATER", confidence: 0.91 };
+    if (thumbDistToMouth < 0.09 && isThumbExtended && extendedFingerCount <= 1) {
+      return { gloss: "WATER", confidence: 0.92 };
     }
 
-    // 7. FOOD / EAT (Fingertips clustered together near mouth)
+    // 7. FOOD / EAT (Fingertips clustered/pinched together near mouth)
     const fingerCluster = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
-    if (distToMouth < 0.15 && fingerCluster < 0.06) {
-      return { gloss: "FOOD", confidence: 0.90 };
+    if (distToMouth < 0.11 && fingerCluster < 0.04) {
+      return { gloss: "FOOD", confidence: 0.91 };
     }
 
-    // 8. NUMERALS (ONE, TWO, THREE, FOUR, FIVE)
-    if (wrist.y > midShoulderY - 0.2) {
-      if (extendedFingerCount === 1 && isIndexExtended) {
+    // 8. NUMERALS (ONE, TWO, THREE, FOUR, FIVE) - Deliberate upright hand at upper chest
+    if (wrist.y < midShoulderY + 0.12 && wrist.y > midShoulderY - 0.15 && isPalmVertical) {
+      if (extendedFingerCount === 1 && isIndexExtended && !isThumbExtended) {
         return { gloss: "ONE", confidence: 0.95 };
       }
-      if (extendedFingerCount === 2 && isIndexExtended && isMiddleExtended) {
+      if (extendedFingerCount === 2 && isIndexExtended && isMiddleExtended && !isRingExtended && !isThumbExtended) {
         return { gloss: "TWO", confidence: 0.96 };
       }
-      if (extendedFingerCount === 3 && isIndexExtended && isMiddleExtended && isRingExtended) {
+      if (extendedFingerCount === 3 && isIndexExtended && isMiddleExtended && isRingExtended && !isPinkyExtended) {
         return { gloss: "THREE", confidence: 0.94 };
       }
       if (extendedFingerCount === 4 && !isThumbExtended) {
@@ -328,7 +376,7 @@ export class LiveVisionTracker {
       }
     }
 
-    return null;
+    return null; // IDLE
   }
 }
 
