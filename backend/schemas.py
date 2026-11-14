@@ -86,9 +86,18 @@ class TextToGlossRequest(BaseModel):
 
     text: str = Field(
         ...,
+        min_length=1,
         max_length=200,
         description="Spoken English or hearing user text",
     )
+
+    @field_validator("text")
+    @classmethod
+    def reject_blank_text(cls, value: str) -> str:
+        """Reject empty or whitespace-only text before the rule mapper runs."""
+        if not value.strip():
+            raise ValueError("Text cannot be empty or whitespace-only.")
+        return value
 
 
 class TextToGlossResponse(BaseModel):

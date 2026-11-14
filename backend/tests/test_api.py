@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend import main as main_module
+from backend.translate import TranslationProviderError
 
 client = TestClient(main_module.app)
 
@@ -21,11 +22,47 @@ def clear_api_state():
     main_module.rate_limiter.clear()
 
 
-def test_health_check_endpoint():
+def test_health_check_endpoint(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json() == {
+        "status": "ok",
+        "features": {
+            "gloss_to_sentence": "rules_only",
+            "translation": "offline_csv_with_english_fallback",
+            "tts": {
+                "mode": "browser_speech_synthesis",
+                "cloud_available": False,
+                "supported_languages": [
+                    "bn",
+                    "en",
+                    "gu",
+                    "hi",
+                    "kn",
+                    "ml",
+                    "mr",
+                    "pa",
+                    "ta",
+                    "te",
+                ],
+            },
+        },
+    }
+
+
+def test_health_reports_gemini_configuration_without_exposing_credentials(
+    monkeypatch,
+):
+    monkeypatch.setenv("LLM_API_KEY", "do-not-return-this-value")
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["features"]["gloss_to_sentence"] == "rules_with_gemini"
+    assert "do-not-return-this-value" not in response.text
 
 
 def test_sentence_translation_endpoint_success():
@@ -179,6 +216,25 @@ def test_sentence_response_structure_is_unchanged():
     }
 
 
+def test_translation_provider_error_returns_502_and_is_not_cached(monkeypatch):
+    monkeypatch.setattr(
+        main_module,
+        "translate_text",
+        Mock(side_effect=TranslationProviderError("provider unavailable")),
+    )
+
+    response = client.post(
+        "/api/sentence",
+        json={"glosses": ["HELLO"], "lang": "hi"},
+    )
+
+    assert response.status_code == 502
+    assert response.json() == {
+        "message": "Translation service is unavailable."
+    }
+    assert len(main_module.response_cache) == 0
+
+
 @pytest.mark.parametrize("glosses", [["UNKNOWN"], ["IDLE"]])
 def test_invalid_vocabulary_does_not_call_downstream_processing(
     monkeypatch, glosses
@@ -223,14 +279,24 @@ def test_text_to_gloss_endpoint_rejects_text_over_200_characters():
     assert response.status_code == 422
 
 
-def test_text_to_gloss_endpoint_uses_shared_rate_limit(monkeypatch):
+@pytest.mark.parametrize("text", ["", "  \t "])
+def test_text_to_gloss_endpoint_rejects_blank_text(text):
+    response = client.post("/api/text-to-gloss", json={"text": text})
+
+    assert response.status_code == 422
+
+
+def test_text_to_gloss_and_sentence_share_rate_limit(monkeypatch):
     monkeypatch.setattr(
         main_module,
         "settings",
         replace(main_module.settings, rate_limit_per_min=1),
     )
 
-    first = client.post("/api/text-to-gloss", json={"text": "hello"})
+    first = client.post(
+        "/api/sentence",
+        json={"glosses": ["HELLO"], "lang": "en"},
+    )
     second = client.post("/api/text-to-gloss", json={"text": "hello"})
 
     assert first.status_code == 200

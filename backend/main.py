@@ -17,14 +17,15 @@ from fastapi.responses import JSONResponse
 from .cache import ResponseCache
 from .config import settings
 from .gloss_to_text import glosses_to_sentence, sentence_to_glosses
+from .llm import is_configured as is_gemini_configured
 from .schemas import (
     SentenceRequest,
     SentenceResponse,
     TextToGlossRequest,
     TextToGlossResponse,
 )
-from .translate import translate_text
-from .tts import get_speech_audio
+from .translate import TRANSLATION_MODE, TranslationProviderError, translate_text
+from .tts import get_speech_audio, get_tts_status
 from .vocabulary import VocabularyValidationError, validate_glosses
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -131,8 +132,19 @@ app.add_middleware(
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Service health probe endpoint."""
-    return {"status": "ok"}
+    """Report service liveness and configured backend feature modes."""
+    return {
+        "status": "ok",
+        "features": {
+            "gloss_to_sentence": (
+                "rules_with_gemini"
+                if is_gemini_configured()
+                else "rules_only"
+            ),
+            "translation": TRANSLATION_MODE,
+            "tts": get_tts_status(),
+        },
+    }
 
 
 @app.post("/api/sentence", response_model=SentenceResponse, tags=["Translation"])
@@ -165,7 +177,17 @@ async def process_sentence(
     sentence, is_emergency = glosses_to_sentence(glosses)
 
     # 2. Translate sentence to target language
-    translated = translate_text(sentence, target_lang)
+    try:
+        translated = translate_text(sentence, target_lang)
+    except TranslationProviderError as exc:
+        logger.error(
+            "Translation provider failed (%s)",
+            type(exc).__name__,
+        )
+        return JSONResponse(
+            status_code=502,
+            content={"message": "Translation service is unavailable."},
+        )
 
     # 3. Resolve TTS audio URL
     audio_url = get_speech_audio(translated, target_lang)
