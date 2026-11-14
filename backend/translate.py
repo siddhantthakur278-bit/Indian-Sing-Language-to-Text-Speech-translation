@@ -262,6 +262,16 @@ def translate_text(text: str, target_lang: str) -> str:
         except Exception as e:
             logger.warning(f"Gemini translation failed: {e}")
 
+    # Check offline verified multilingual dictionary (10 languages)
+    try:
+        from backend.multilingual_dict import lookup_multilingual_phrase
+        dict_trans = lookup_multilingual_phrase(text, norm_target)
+        if dict_trans:
+            _TRANSLATION_CACHE.put(cache_key, dict_trans)
+            return dict_trans
+    except Exception as e:
+        logger.warning(f"Dictionary lookup error: {e}")
+
     logger.info(
         "Offline translation unavailable for target '%s'; returning English text",
         norm_target,
