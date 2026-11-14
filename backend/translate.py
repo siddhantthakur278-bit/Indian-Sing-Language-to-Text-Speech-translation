@@ -7,11 +7,20 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Protocol
 
+from backend.vocabulary import VOCABULARY
+
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 GLOSS_PAIRS_PATH = PROJECT_ROOT / "data" / "gloss_pairs.csv"
 MAX_TRANSLATION_CACHE_ENTRIES = 256
+REQUIRED_CSV_FIELDS = (
+    "gloss_sequence",
+    "english_sentence",
+    "hindi_translation",
+    "marathi_translation",
+    "is_emergency",
+)
 
 INDICTRANS2_LANG_MAP = {
     "en": "eng_Latn",
@@ -38,6 +47,93 @@ class TranslationProviderError(RuntimeError):
     """Raised when an external translation provider fails."""
 
 
+class TranslationDatasetError(ValueError):
+    """Raised when the offline CSV has malformed or invalid data."""
+
+
+def load_translation_dataset(
+    csv_path: Path = GLOSS_PAIRS_PATH,
+) -> tuple[dict[tuple[str, str], str], tuple[str, ...]]:
+    """Validate the CSV and return lookup pairs plus detected conflicts."""
+    translations: dict[tuple[str, str], str] = {}
+    seen_records: set[tuple[str, ...]] = set()
+    conflicts: set[str] = set()
+    try:
+        with csv_path.open(encoding="utf-8-sig", newline="") as file:
+            reader = csv.DictReader(file, strict=True)
+            if tuple(reader.fieldnames or ()) != REQUIRED_CSV_FIELDS:
+                raise TranslationDatasetError(
+                    f"Expected CSV fields in order: {', '.join(REQUIRED_CSV_FIELDS)}"
+                )
+
+            for line_number, row in enumerate(reader, start=2):
+                if None in row or any(
+                    row.get(field) is None for field in REQUIRED_CSV_FIELDS
+                ):
+                    raise TranslationDatasetError(
+                        f"Malformed CSV row at line {line_number}: "
+                        "column count does not match the header."
+                    )
+
+                normalized = {
+                    field: row[field].strip() for field in REQUIRED_CSV_FIELDS
+                }
+                missing = [
+                    field for field, value in normalized.items() if not value
+                ]
+                if missing:
+                    raise TranslationDatasetError(
+                        f"Missing required values at line {line_number}: "
+                        f"{', '.join(missing)}."
+                    )
+
+                glosses = normalized["gloss_sequence"].split()
+                if not glosses or any(
+                    gloss not in VOCABULARY or gloss == "IDLE" for gloss in glosses
+                ):
+                    raise TranslationDatasetError(
+                        f"Invalid or non-canonical gloss sequence at line "
+                        f"{line_number}: {normalized['gloss_sequence']!r}."
+                    )
+
+                label = normalized["is_emergency"].lower()
+                if label not in {"true", "false"}:
+                    raise TranslationDatasetError(
+                        f"Invalid is_emergency value at line {line_number}: "
+                        f"{normalized['is_emergency']!r}."
+                    )
+                normalized["is_emergency"] = label
+
+                record = tuple(normalized[field] for field in REQUIRED_CSV_FIELDS)
+                if record in seen_records:
+                    raise TranslationDatasetError(
+                        f"Duplicate CSV record at line {line_number}."
+                    )
+                seen_records.add(record)
+
+                english = normalized["english_sentence"].casefold()
+                for language, field in (
+                    ("hi", "hindi_translation"),
+                    ("mr", "marathi_translation"),
+                ):
+                    key = (english, language)
+                    translated = normalized[field]
+                    existing = translations.get(key)
+                    if existing is not None and existing != translated:
+                        conflicts.add(
+                            f"{language}:{normalized['english_sentence']}"
+                        )
+                    translations[key] = translated
+    except TranslationDatasetError:
+        raise
+    except (OSError, UnicodeError, csv.Error) as exc:
+        raise TranslationDatasetError(
+            f"Could not load valid UTF-8 CSV from {csv_path}: {exc}"
+        ) from exc
+
+    return translations, tuple(sorted(conflicts))
+
+
 class OfflineCsvTranslationProvider:
     """Look up existing Hindi and Marathi translations from the committed CSV."""
 
@@ -47,25 +143,22 @@ class OfflineCsvTranslationProvider:
     }
 
     def __init__(self, csv_path: Path = GLOSS_PAIRS_PATH) -> None:
-        self._translations: dict[tuple[str, str], str] = {}
         try:
-            with csv_path.open(encoding="utf-8-sig", newline="") as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    english = (row.get("english_sentence") or "").strip().casefold()
-                    if not english:
-                        continue
-                    for language, field in self._translation_fields.items():
-                        translated = (row.get(field) or "").strip()
-                        if translated:
-                            self._translations[(english, language)] = translated
-        except FileNotFoundError:
-            logger.warning(
-                "Offline translation CSV is missing; English fallback is active"
+            self._translations, self.translation_conflicts = load_translation_dataset(
+                csv_path
             )
-        except (OSError, UnicodeError, csv.Error):
-            logger.exception(
-                "Could not load offline translations; English fallback is active"
+        except TranslationDatasetError as exc:
+            logger.warning(
+                "Offline translation dataset unavailable (%s); English fallback is active",
+                exc,
+            )
+            self._translations = {}
+            self.translation_conflicts = ()
+        if self.translation_conflicts:
+            logger.warning(
+                "Offline translations contain %d conflicting language/sentence "
+                "lookup keys; deterministic last-row values are used",
+                len(self.translation_conflicts),
             )
 
     def translate(self, text: str, target_lang: str) -> str | None:
