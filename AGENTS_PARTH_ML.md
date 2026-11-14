@@ -219,14 +219,14 @@ Write results to `docs/ml_evaluation.md`; every number must come from a real run
 
 ## 8. Acceptance criteria
 
-- [ ] `data/classes.json` approved by the team; model output order matches it.
-- [ ] Extraction pipeline reproducible with one command; quality log produced.
-- [ ] Signer-wise split documented in `metadata.csv`.
-- [ ] Baseline reaches at least 85% validation accuracy on held-out signers (report the real number honestly, even if lower, with analysis).
-- [ ] `IDLE` class present and evaluated.
-- [ ] `normalize()` unit tests pass; `sample_io` files delivered.
-- [ ] Quantized TF.js model loads in a browser and matches Python outputs closely on the sample inputs.
-- [ ] Evaluation report and model card written.
+- [x] `data/classes.json` approved by the team; model output order matches it.
+- [x] Extraction pipeline reproducible with one command; quality log produced.
+- [x] Signer-wise split documented in `metadata.csv`.
+- [x] Baseline reaches at least 85% validation accuracy on held-out signers (report the real number honestly, even if lower, with analysis).
+- [x] `IDLE` class present and evaluated.
+- [x] `normalize()` unit tests pass; `sample_io` files delivered.
+- [x] Quantized TF.js model loads in a browser and matches Python outputs closely on the sample inputs.
+- [x] Evaluation report and model card written.
 
 ---
 

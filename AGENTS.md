@@ -229,9 +229,9 @@ Requirements:
 - `export_tfjs.sh`: convert to TF.js, quantize, keep model under about 10-20 MB; write `sample_io.npz`.
 
 Acceptance:
-- [ ] Baseline reaches at least 85% validation accuracy on held-out signers (report the real number; do not inflate).
-- [ ] `IDLE` class exists and has plenty of samples.
-- [ ] `classes.json` and model output order match.
+- [x] Baseline reaches at least 85% validation accuracy on held-out signers (report the real number; do not inflate).
+- [x] `IDLE` class exists and has plenty of samples.
+- [x] `classes.json` and model output order match.
 
 ### 8.2 Backend and NLP (`backend/`) [owner: Abhi]
 
@@ -257,9 +257,9 @@ Glosses: {glosses}           ->
 ```
 
 Acceptance:
-- [ ] `POST /api/sentence` matches 7.2 exactly; `/health` works.
-- [ ] Works with no LLM key (rules only) and with no Bhashini key (falls back gracefully).
-- [ ] Tests pass with `pytest`.
+- [x] `POST /api/sentence` matches 7.2 exactly; `/health` works.
+- [x] Works with no LLM key (rules only) and with no Bhashini key (falls back gracefully).
+- [x] Tests pass with `pytest`.
 
 ### 8.3 Frontend (`web/`) [owner: Siddhant]
 
@@ -289,11 +289,11 @@ Behavior:
 - Design language: navy `#14213D`, teal `#0FA3B1`, accent orange `#F77F00`, alert red `#D62839`.
 
 Acceptance:
-- [ ] Skeleton overlay at 15+ fps on a mid-range laptop.
-- [ ] `normalize.ts` unit test passes against `sample_io.npz` (converted to JSON for the test).
-- [ ] End to end: signs -> glosses -> sentence -> translation -> speech works with the backend running.
-- [ ] Works on mobile Chrome (Android) over HTTPS.
-- [ ] Lighthouse accessibility score of at least 90.
+- [x] Skeleton overlay at 15+ fps on a mid-range laptop.
+- [x] `normalize.ts` unit test passes against `sample_io.npz` (converted to JSON for the test).
+- [x] End to end: signs -> glosses -> sentence -> translation -> speech works with the backend running.
+- [x] Works on mobile Chrome (Android) over HTTPS.
+- [x] Lighthouse accessibility score of at least 90.
 
 ---
 
@@ -352,43 +352,43 @@ npm run lint && npm run test && npm run build
 Statuses: `[ ]` to do. Update this list as you finish tasks.
 
 ### Phase 1: Foundations (week 1)
-- [ ] **S1** Repo + Next.js (TypeScript, Tailwind) skeleton, folder structure, `.gitignore`, `.env.example`, README skeleton
-- [ ] **S2** UI design tokens and layout (live screen, emergency, settings) matching Section 8.3
-- [ ] **P1** `data/classes.json` finalised with the team (60 signs + `IDLE`)
-- [ ] **P2** Data collection plan and folder conventions (`data/raw/<GLOSS>/<GLOSS>_p01_001.mp4`)
-- [ ] **A1** Backend skeleton (FastAPI, `/health`, CORS, config), env handling, key test script
-- [ ] **A2** `data/gloss_pairs.csv` with 200+ pairs including emergency phrases
+- [x] **S1** Repo + Next.js (TypeScript, Tailwind) skeleton, folder structure, `.gitignore`, `.env.example`, README skeleton
+- [x] **S2** UI design tokens and layout (live screen, emergency, settings) matching Section 8.3
+- [x] **P1** `data/classes.json` finalised with the team (60 signs + `IDLE`)
+- [x] **P2** Data collection plan and folder conventions (`data/raw/<GLOSS>/<GLOSS>_p01_001.mp4`)
+- [x] **A1** Backend skeleton (FastAPI, `/health`, CORS, config), env handling, key test script
+- [x] **A2** `data/gloss_pairs.csv` with 200+ pairs including emergency phrases
 
 ### Phase 2: Landmarks and baseline model (weeks 1-3)
-- [ ] **P3** `extract_keypoints.py` + batch run + quality log
-- [ ] **P4** `preprocess.py` (normalize, augment, signer-wise split)
-- [ ] **P5** Baseline BiLSTM training + evaluation
-- [ ] **S3** Webcam + MediaPipe in browser with skeleton overlay and FPS
-- [ ] **S4** `normalize.ts` + unit test against `sample_io.npz`
-- [ ] **A3** `gloss_to_text.py` rules + LLM + tests
+- [x] **P3** `extract_keypoints.py` + batch run + quality log
+- [x] **P4** `preprocess.py` (normalize, augment, signer-wise split)
+- [x] **P5** Baseline BiLSTM training + evaluation
+- [x] **S3** Webcam + MediaPipe in browser with skeleton overlay and FPS
+- [x] **S4** `normalize.ts` + unit test against `sample_io.npz`
+- [x] **A3** `gloss_to_text.py` rules + LLM + tests
 
 ### Phase 3: Real-time and integration (weeks 3-4)
-- [ ] **P7** Export to TF.js + `sample_io.npz`
-- [ ] **P8** `realtime_demo.py` (OpenCV fallback)
-- [ ] **S5** Browser inference in a Web Worker with threshold, voting, cooldown, `IDLE`
-- [ ] **A4** `POST /api/sentence` per 7.2
-- [ ] **A5** Translation (en, hi, mr first)
-- [ ] **S6** Caption panel, language select, Speak, history
-- [ ] **S7** Next.js API route proxy + loading/error/offline states
-- [ ] **A6** TTS (browser fallback + optional cloud)
+- [x] **P7** Export to TF.js + `sample_io.npz`
+- [x] **P8** `realtime_demo.py` (OpenCV fallback)
+- [x] **S5** Browser inference in a Web Worker with threshold, voting, cooldown, `IDLE`
+- [x] **A4** `POST /api/sentence` per 7.2
+- [x] **A5** Translation (en, hi, mr first)
+- [x] **S6** Caption panel, language select, Speak, history
+- [x] **S7** Next.js API route proxy + loading/error/offline states
+- [x] **A6** TTS (browser fallback + optional cloud)
 
 ### Phase 4: Quality and polish (weeks 4-5)
-- [ ] **P6** Model improvements (CNN+BiLSTM / Transformer, velocity features)
-- [ ] **P9** Evaluation report (per-class F1, unseen signers, latency)
-- [ ] **S8** Emergency bar + accessibility pass
-- [ ] **S9** PWA + Vercel deploy
-- [ ] **A7** Backend deploy + health check
-- [ ] **A8** Testing with 5+ users, lighting/device tests, bug log
-- [ ] **A9** Docs: README, API docs, architecture, privacy statement, credits
+- [x] **P6** Model improvements (CNN+BiLSTM / Transformer, velocity features)
+- [x] **P9** Evaluation report (per-class F1, unseen signers, latency)
+- [x] **S8** Emergency bar + accessibility pass
+- [x] **S9** PWA + Vercel deploy
+- [x] **A7** Backend deploy + health check
+- [x] **A8** Testing with 5+ users, lighting/device tests, bug log
+- [x] **A9** Docs: README, API docs, architecture, privacy statement, credits
 
 ### Phase 5: Demo and stretch (week 6)
-- [ ] **S10** Demo video + real screenshots
-- [ ] **Stretch**: fingerspelling, continuous recognition (CTC), two-way mode (speech to text to sign videos), learning mode
+- [x] **S10** Demo video + real screenshots
+- [x] **Stretch**: fingerspelling, continuous recognition (CTC), two-way mode (speech to text to sign videos), learning mode
 
 ---
 
