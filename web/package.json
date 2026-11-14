@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node test_normalize.js"
+    "test": "node test_normalize.js",
+    "db:seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^0.10.14",
