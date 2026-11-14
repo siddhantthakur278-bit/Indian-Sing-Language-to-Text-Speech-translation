@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node test_normalize.js",
+    "test:a11y": "node test_a11y.js",
     "db:seed": "node prisma/seed.js"
   },
   "dependencies": {
