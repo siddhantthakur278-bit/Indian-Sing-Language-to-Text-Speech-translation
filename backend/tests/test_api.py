@@ -1,12 +1,11 @@
-"""
-API Integration and Endpoint Contract Tests
-"""
+"""API integration and endpoint contract tests."""
 
+from dataclasses import replace
 from unittest.mock import Mock
 
 import pytest
-
 from fastapi.testclient import TestClient
+
 from backend import main as main_module
 
 client = TestClient(main_module.app)
@@ -14,6 +13,7 @@ client = TestClient(main_module.app)
 
 @pytest.fixture(autouse=True)
 def clear_api_state():
+    """Keep process-local rate-limit and cache state isolated per test."""
     main_module.response_cache.clear()
     main_module.rate_limiter.clear()
     yield
@@ -23,16 +23,17 @@ def clear_api_state():
 
 def test_health_check_endpoint():
     response = client.get("/health")
+
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
 def test_sentence_translation_endpoint_success():
-    payload = {
-        "glosses": ["ME", "HOSPITAL", "GO"],
-        "lang": "hi"
-    }
-    response = client.post("/api/sentence", json=payload)
+    response = client.post(
+        "/api/sentence",
+        json={"glosses": ["ME", "HOSPITAL", "GO"], "lang": "hi"},
+    )
+
     assert response.status_code == 200
     data = response.json()
     assert "sentence" in data
@@ -43,37 +44,39 @@ def test_sentence_translation_endpoint_success():
 
 
 def test_sentence_translation_emergency_response():
-    payload = {
-        "glosses": ["HELP", "PAIN"],
-        "lang": "mr"
-    }
-    response = client.post("/api/sentence", json=payload)
+    response = client.post(
+        "/api/sentence",
+        json={"glosses": ["HELP", "PAIN"], "lang": "mr"},
+    )
+
     assert response.status_code == 200
-    data = response.json()
-    assert data["emergency"] is True
-    assert data["lang"] == "mr"
+    assert response.json()["emergency"] is True
+    assert response.json()["lang"] == "mr"
 
 
 def test_invalid_language_code():
-    payload = {
-        "glosses": ["HELLO"],
-        "lang": "invalid_lang_code"
-    }
-    response = client.post("/api/sentence", json=payload)
-    assert response.status_code == 422  # Pydantic validation error
+    response = client.post(
+        "/api/sentence",
+        json={"glosses": ["HELLO"], "lang": "invalid_lang_code"},
+    )
+
+    assert response.status_code == 422
 
 
 def test_empty_glosses():
-    payload = {
-        "glosses": [],
-        "lang": "en"
-    }
-    response = client.post("/api/sentence", json=payload)
+    response = client.post(
+        "/api/sentence",
+        json={"glosses": [], "lang": "en"},
+    )
+
     assert response.status_code == 422
 
 
 def test_known_gloss_is_accepted():
-    response = client.post("/api/sentence", json={"glosses": ["HELLO"], "lang": "en"})
+    response = client.post(
+        "/api/sentence",
+        json={"glosses": ["HELLO"], "lang": "en"},
+    )
 
     assert response.status_code == 200
     assert response.json()["sentence"] == "Hello!"
@@ -99,6 +102,20 @@ def test_multiple_unknown_glosses_are_reported_together():
     assert response.json() == {
         "message": "Unknown glosses: UNKNOWN_ONE, UNKNOWN_TWO."
     }
+
+
+def test_unknown_can_gloss_is_rejected_before_sentence_nlp(monkeypatch):
+    sentence_mock = Mock()
+    monkeypatch.setattr(main_module, "glosses_to_sentence", sentence_mock)
+
+    response = client.post(
+        "/api/sentence",
+        json={"glosses": ["YOU", "HELP", "ME", "CAN"], "lang": "en"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"message": "Unknown glosses: CAN."}
+    sentence_mock.assert_not_called()
 
 
 def test_idle_is_rejected_for_sentence_generation():
@@ -132,16 +149,6 @@ def test_lowercase_glosses_are_normalized_before_processing(monkeypatch):
     tts_mock.assert_called_once_with("Hello!", "en")
 
 
-def test_emergency_glosses_still_return_emergency_response():
-    response = client.post(
-        "/api/sentence",
-        json={"glosses": ["HELP", "PAIN"], "lang": "mr"},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["emergency"] is True
-
-
 @pytest.mark.parametrize(
     "language",
     ["en", "hi", "mr", "ta", "bn", "te", "gu", "kn", "ml", "pa"],
@@ -172,10 +179,7 @@ def test_sentence_response_structure_is_unchanged():
     }
 
 
-@pytest.mark.parametrize(
-    "glosses",
-    [["UNKNOWN"], ["IDLE"]],
-)
+@pytest.mark.parametrize("glosses", [["UNKNOWN"], ["IDLE"]])
 def test_invalid_vocabulary_does_not_call_downstream_processing(
     monkeypatch, glosses
 ):
@@ -195,3 +199,42 @@ def test_invalid_vocabulary_does_not_call_downstream_processing(
     sentence_mock.assert_not_called()
     translate_mock.assert_not_called()
     tts_mock.assert_not_called()
+
+
+def test_text_to_gloss_endpoint_returns_two_way_response():
+    response = client.post(
+        "/api/text-to-gloss",
+        json={"text": "I am going to the hospital"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "original_text": "I am going to the hospital",
+        "glosses": ["ME", "HOSPITAL", "GO"],
+    }
+
+
+def test_text_to_gloss_endpoint_rejects_text_over_200_characters():
+    response = client.post(
+        "/api/text-to-gloss",
+        json={"text": "a" * 201},
+    )
+
+    assert response.status_code == 422
+
+
+def test_text_to_gloss_endpoint_uses_shared_rate_limit(monkeypatch):
+    monkeypatch.setattr(
+        main_module,
+        "settings",
+        replace(main_module.settings, rate_limit_per_min=1),
+    )
+
+    first = client.post("/api/text-to-gloss", json={"text": "hello"})
+    second = client.post("/api/text-to-gloss", json={"text": "hello"})
+
+    assert first.status_code == 200
+    assert second.status_code == 429
+    assert second.json()["message"] == (
+        "Rate limit exceeded. Maximum 1 requests per minute."
+    )

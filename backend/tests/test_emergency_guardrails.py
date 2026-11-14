@@ -85,6 +85,74 @@ class TestEmergencyGuardrails:
 
         llm.assert_not_called()
 
+    def test_mixed_sequences_with_each_emergency_trigger_bypass_llm(self):
+        critical_keywords = [
+            "HELP",
+            "PAIN",
+            "POLICE",
+            "AMBULANCE",
+            "FIRE",
+            "ACCIDENT",
+            "EMERGENCY",
+            "DANGER",
+        ]
+
+        with patch.object(
+            gloss_to_text,
+            "query_llm_for_sentence",
+            side_effect=AssertionError("Emergency input must bypass the LLM"),
+        ) as llm:
+            for keyword in critical_keywords:
+                sequence = ["ME", keyword, "WANT"]
+                sentence, is_emergency = gloss_to_text.glosses_to_sentence(
+                    sequence
+                )
+
+                assert sentence
+                assert is_emergency is True, sequence
+
+        llm.assert_not_called()
+
+    def test_you_help_me_can_is_emergency_in_direct_nlp_engine(self):
+        with patch.object(
+            gloss_to_text,
+            "query_llm_for_sentence",
+            side_effect=AssertionError("Emergency input must bypass the LLM"),
+        ) as llm:
+            sentence, is_emergency = gloss_to_text.glosses_to_sentence(
+                ["YOU", "HELP", "ME", "CAN"]
+            )
+
+        assert sentence == "Emergency! Please help me immediately."
+        assert is_emergency is True
+        llm.assert_not_called()
+
+    def test_emergency_detection_precedes_conflicting_ordinary_exact_template(
+        self,
+    ):
+        sequence = ("YOU", "HELP", "ME", "CAN")
+        conflicting_ordinary_text = "Ordinary template must not win."
+
+        with (
+            patch.dict(
+                gloss_to_text.RULE_TEMPLATES,
+                {sequence: conflicting_ordinary_text},
+            ),
+            patch.object(
+                gloss_to_text,
+                "query_llm_for_sentence",
+                side_effect=AssertionError("Emergency input must bypass the LLM"),
+            ) as llm,
+        ):
+            sentence, is_emergency = gloss_to_text.glosses_to_sentence(
+                list(sequence)
+            )
+
+        assert sentence == "Emergency! Please help me immediately."
+        assert sentence != conflicting_ordinary_text
+        assert is_emergency is True
+        llm.assert_not_called()
+
     def test_ordinary_unmatched_sequence_uses_safe_fallback(self):
         glosses = ["MEET", "FRIEND", "TOMORROW"]
 
@@ -125,7 +193,6 @@ class TestEmergencyGuardrails:
             ["FOOD", "WANT"],
             ["WATER", "PLEASE"],
             ["WHAT", "TIME", "MEET"],
-            ["YOU", "NAME", "WHAT"],
             ["ME", "HOME", "GO"],
             ["ME", "UNDERSTAND"],
             ["PLEASE", "WAIT"],

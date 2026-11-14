@@ -16,9 +16,11 @@ __pycache__/
 
 # Next.js Build
 .next/
+web/.next/
 out/
 build/
 dist/
+*.tsbuildinfo
 
 # Dataset & Media (Excluded per Privacy and Storage Rules)
 data/raw/*

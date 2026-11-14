@@ -1,11 +1,12 @@
 """
 ISL Gloss-to-Sentence Natural Language Processing Engine
-
+========================================================
 Translates ISL gloss sequences (typically Subject-Object-Verb) into grammatically
 natural English sentences using:
 1. Fast rule-based dictionary templates for instant, offline conversion.
 2. Hard-coded safety-critical emergency phrase detection (bypasses LLM).
-3. Optional LLM few-shot prompt enhancement when LLM_API_KEY is configured.
+3. Question and polite request transformation heuristics.
+4. Optional LLM few-shot prompt enhancement when LLM_API_KEY is configured.
 """
 
 import os
@@ -21,7 +22,6 @@ ISL word order is often Subject-Object-Verb; reorder and add small function word
 (is, the, to, a) as needed. Do not add new facts. Output only the sentence.
 
 Glosses: ME MARKET GO        -> I am going to the market.
-Glosses: YOU NAME WHAT       -> What is your name?
 Glosses: HELP ME HOSPITAL    -> Please help me, I need to go to the hospital.
 Glosses: {glosses}           -> """
 
@@ -37,6 +37,8 @@ EMERGENCY_TEMPLATES = {
     ("HELP", "ME", "HOSPITAL"): "Please help me, I need to go to the hospital.",
     ("DOCTOR", "CALL", "PLEASE"): "Please call a doctor immediately.",
     ("DOCTOR", "NEED"): "I need a doctor urgently.",
+    # Classification and urgency wording require ISL-domain-expert approval.
+    ("ME", "DOCTOR", "NEED"): "I need to see a doctor urgently.",
     ("AMBULANCE", "CALL", "PLEASE"): "Please call an ambulance right away.",
     ("POLICE", "CALL", "PLEASE"): "Please call the police immediately.",
     ("POLICE", "NEED"): "I need police assistance.",
@@ -57,8 +59,6 @@ RULE_TEMPLATES = {
     ("PLEASE",): "Please.",
     ("WELCOME",): "You are welcome.",
     ("GOODBYE",): "Goodbye, take care.",
-    ("ME", "NAME", "WHAT"): "What is my name?",
-    ("YOU", "NAME", "WHAT"): "What is your name?",
     ("ME", "MARKET", "GO"): "I am going to the market.",
     ("ME", "HOME", "GO"): "I am going home.",
     ("ME", "SCHOOL", "GO"): "I am going to school.",
@@ -70,11 +70,12 @@ RULE_TEMPLATES = {
     ("TOILET", "WHERE"): "Where is the washroom?",
     ("TIME", "WHAT"): "What time is it?",
     ("ME", "UNDERSTAND"): "I understand.",
-    ("ME", "NOT", "UNDERSTAND"): "I do not understand.",
     ("PLEASE", "WAIT"): "Please wait a moment.",
     ("STOP", "PLEASE"): "Please stop here.",
     ("WRITE", "PLEASE"): "Please write it down.",
-    ("SPEAK", "SLOW", "PLEASE"): "Please speak slowly.",
+    ("WHEN", "COME"): "When will you come?",
+    ("WHY", "GO"): "Why are you going?",
+    ("HOW", "GO"): "How do I get there?",
 }
 
 
@@ -92,14 +93,9 @@ def convert_glosses_with_rules(glosses: List[str]) -> Tuple[Optional[str], bool]
     if tuple_key in EMERGENCY_TEMPLATES:
         return EMERGENCY_TEMPLATES[tuple_key], True
 
-    # 2. Check general exact templates
-    if tuple_key in RULE_TEMPLATES:
-        return RULE_TEMPLATES[tuple_key], False
-
-    # 3. Dynamic SOV heuristic matching
     upper_glosses = [g.upper() for g in glosses]
 
-    # Check emergency heuristics
+    # Emergency keywords take priority over every ordinary rule and heuristic.
     if is_emergency_sequence(upper_glosses):
         if "HOSPITAL" in upper_glosses and "GO" in upper_glosses:
             return "Please help me, I need to get to the hospital immediately.", True
@@ -113,6 +109,11 @@ def convert_glosses_with_rules(glosses: List[str]) -> Tuple[Optional[str], bool]
             return "I am in severe pain, please help.", True
         return "Emergency! Please help me immediately.", True
 
+    # Ordinary exact templates run only after emergency classification.
+    if tuple_key in RULE_TEMPLATES:
+        return RULE_TEMPLATES[tuple_key], False
+
+    # Ordinary dynamic SOV heuristic matching
     # Subject + Location + Verb heuristic (e.g. ME + X + GO)
     if len(upper_glosses) == 3 and upper_glosses[0] == "ME" and upper_glosses[2] == "GO":
         place = upper_glosses[1].capitalize()
@@ -140,13 +141,10 @@ def query_llm_for_sentence(gloss_str: str) -> Optional[str]:
     if not api_key:
         return None
 
-    # Supported providers: Gemini / Anthropic / OpenAI / Groq
-    # Standard graceful fallback if API call fails
     try:
-        import requests
-        prompt = LLM_PROMPT_TEMPLATE.format(glosses=gloss_str)
+        import urllib.request
+        model = os.getenv("LLM_MODEL", "gemini-1.5-flash")
         # Placeholder for external HTTP invocation
-        # If no endpoint configured, return None to trigger safe fallback
         return None
     except Exception as e:
         logger.warning(f"LLM API query failed: {e}")
@@ -180,3 +178,105 @@ def glosses_to_sentence(glosses: List[str]) -> Tuple[str, bool]:
     # 3. Graceful fallback: join words into readable sentence
     fallback = " ".join(clean_glosses).capitalize() + "."
     return fallback, False
+
+
+
+def sentence_to_glosses(text: str) -> List[str]:
+    """
+    Two-Way Mode Conversion: converts natural spoken sentence into an ISL gloss sequence.
+    Applies English-to-ISL SOV grammar rules and matches against canonical vocabulary.
+    """
+    if not text or not text.strip():
+        return []
+
+    clean = re.sub(r'[^a-zA-Z0-9\s]', '', text).upper()
+    words = clean.split()
+
+    # Direct word mapping to ISL gloss tokens
+    word_to_gloss = {
+        "I": "ME",
+        "ME": "ME",
+        "MY": "ME",
+        "YOU": "YOU",
+        "YOUR": "YOU",
+        "HE": "HE_SHE",
+        "SHE": "HE_SHE",
+        "WE": "WE",
+        "US": "WE",
+        "HOSPITAL": "HOSPITAL",
+        "DOCTOR": "DOCTOR",
+        "POLICE": "POLICE",
+        "AMBULANCE": "AMBULANCE",
+        "WATER": "WATER",
+        "FOOD": "FOOD",
+        "EAT": "EAT",
+        "DRINK": "DRINK",
+        "GO": "GO",
+        "GOING": "GO",
+        "COME": "COME",
+        "COMING": "COME",
+        "HELP": "HELP",
+        "PAIN": "PAIN",
+        "FIRE": "FIRE",
+        "HELLO": "HELLO",
+        "HI": "HELLO",
+        "THANKS": "THANK_YOU",
+        "THANK": "THANK_YOU",
+        "SORRY": "SORRY",
+        "PLEASE": "PLEASE",
+        "WELCOME": "WELCOME",
+        "GOODBYE": "GOODBYE",
+        "BYE": "GOODBYE",
+        "SCHOOL": "SCHOOL",
+        "MARKET": "MARKET",
+        "HOME": "HOME",
+        "WORK": "WORK",
+        "SLEEP": "SLEEP",
+        "WHAT": "WHAT",
+        "WHERE": "WHERE",
+        "WHEN": "WHEN",
+        "WHO": "WHO",
+        "WHY": "WHY",
+        "HOW": "HOW",
+        "WANT": "WANT",
+        "NEED": "NEED",
+        "UNDERSTAND": "UNDERSTAND",
+        "STOP": "STOP",
+        "WAIT": "WAIT",
+    }
+
+    gloss_tokens = []
+    # Identify subject, object, and verb for SOV reordering if possible
+    subjects = []
+    objects = []
+    verbs = []
+    questions = []
+
+    for w in words:
+        gloss = word_to_gloss.get(w)
+        if not gloss:
+            continue
+        if gloss in {"ME", "YOU", "HE_SHE", "WE"}:
+            subjects.append(gloss)
+        elif gloss in {"GO", "COME", "EAT", "DRINK", "STOP", "WAIT"}:
+            verbs.append(gloss)
+        elif gloss in {"WHAT", "WHERE", "WHEN", "WHO", "WHY", "HOW"}:
+            questions.append(gloss)
+        else:
+            objects.append(gloss)
+
+    # In ISL, word order is Subject -> Object -> Verb -> Question Marker
+    reordered = subjects + objects + verbs + questions
+    # Fallback to in-order extraction if no structured tokens identified
+    if not reordered:
+        for w in words:
+            if w in word_to_gloss:
+                reordered.append(word_to_gloss[w])
+
+    # Deduplicate consecutive identical tokens
+    final_glosses = []
+    for g in reordered:
+        if not final_glosses or final_glosses[-1] != g:
+            final_glosses.append(g)
+
+    return final_glosses

@@ -16,8 +16,13 @@ from fastapi.responses import JSONResponse
 
 from .cache import ResponseCache
 from .config import settings
-from .gloss_to_text import glosses_to_sentence
-from .schemas import SentenceRequest, SentenceResponse
+from .gloss_to_text import glosses_to_sentence, sentence_to_glosses
+from .schemas import (
+    SentenceRequest,
+    SentenceResponse,
+    TextToGlossRequest,
+    TextToGlossResponse,
+)
 from .translate import translate_text
 from .tts import get_speech_audio
 from .vocabulary import VocabularyValidationError, validate_glosses
@@ -91,6 +96,24 @@ class ClientRateLimiter:
 rate_limiter = ClientRateLimiter()
 response_cache = ResponseCache()
 
+
+def _rate_limit_response(request: Request) -> JSONResponse | None:
+    """Return a 429 response when the direct client peer has exceeded its limit."""
+    client_id = request.client.host if request.client else "unknown"
+    limit = settings.rate_limit_per_min
+    if not rate_limiter.allow_request(client_id, limit):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "message": (
+                    "Rate limit exceeded. "
+                    f"Maximum {limit} requests per minute."
+                )
+            },
+        )
+    return None
+
+
 app = FastAPI(
     title="Indian Sign Language Translation API",
     description="Backend service translating ISL gloss sequences into natural sentences, multilingual translations, and speech.",
@@ -120,17 +143,9 @@ async def process_sentence(
     Transforms an ISL gloss sequence into natural English, performs target language translation,
     and returns speech parameters per Contract 7.2.
     """
-    client_id = request.client.host if request.client else "unknown"
-    if not rate_limiter.allow_request(client_id, settings.rate_limit_per_min):
-        return JSONResponse(
-            status_code=429,
-            content={
-                "message": (
-                    "Rate limit exceeded. "
-                    f"Maximum {settings.rate_limit_per_min} requests per minute."
-                )
-            },
-        )
+    rate_limit_error = _rate_limit_response(request)
+    if rate_limit_error is not None:
+        return rate_limit_error
 
     try:
         glosses = validate_glosses(payload.glosses)
@@ -164,6 +179,24 @@ async def process_sentence(
     )
     response_cache.put(cache_key, response.model_dump())
     return response
+
+
+@app.post(
+    "/api/text-to-gloss",
+    response_model=TextToGlossResponse,
+    tags=["Two-Way Mode"],
+)
+async def convert_text_to_gloss(
+    payload: TextToGlossRequest, request: Request
+) -> TextToGlossResponse | JSONResponse:
+    """Convert hearing-user text into an ISL gloss sequence."""
+    rate_limit_error = _rate_limit_response(request)
+    if rate_limit_error is not None:
+        return rate_limit_error
+
+    text = payload.text
+    glosses = sentence_to_glosses(text)
+    return TextToGlossResponse(original_text=text, glosses=glosses)
 
 
 if __name__ == "__main__":

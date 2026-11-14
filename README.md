@@ -29,13 +29,15 @@
 
 - [1. Executive Summary & Problem Statement](#1-executive-summary--problem-statement)
 - [2. System Architecture & Pipeline](#2-system-architecture--pipeline)
-- [3. Visual Interface Walkthrough & Mockups](#3-visual-interface-walkthrough--mockups)
-- [4. The Three Integration Contracts](#4-the-three-integration-contracts)
+- [3. Visual Interface Walkthrough & 5 Accessible Modes](#3-visual-interface-walkthrough--5-accessible-modes)
+- [4. The Core Integration Contracts](#4-the-core-integration-contracts)
   - [Contract 1: Gloss Vocabulary (classes.json)](#contract-1-gloss-vocabulary-classesjson)
   - [Contract 2: 258-Dimensional Landmark Vector & Normalization](#contract-2-258-dimensional-landmark-vector--normalization)
   - [Contract 3: Sentence REST API Contract](#contract-3-sentence-rest-api-contract)
+  - [Contract 4: Bidirectional Speech-to-Gloss API Contract](#contract-4-bidirectional-speech-to-gloss-api-contract)
 - [5. Machine Learning & Inference Pipeline](#5-machine-learning--inference-pipeline)
   - [BiLSTM Architecture](#bilstm-architecture)
+  - [Held-Out Signer Benchmark Evaluation](#held-out-signer-benchmark-evaluation)
   - [Real-Time Smoothing & Temporal Consensus State Machine](#real-time-smoothing--temporal-consensus-state-machine)
 - [6. NLP & Multilingual Indic Translation Engine](#6-nlp--multilingual-indic-translation-engine)
   - [SOV Grammar Restructuring](#sov-grammar-restructuring)
@@ -131,7 +133,15 @@ sequenceDiagram
 
 ---
 
-## 3. Visual Interface Walkthrough & Mockups
+## 3. Visual Interface Walkthrough & 5 Accessible Modes
+
+The web application ([`web/`](file:///Users/siddhant/Downloads/asd_project_major/web/)) provides five dedicated modes accessible through a unified tab bar:
+
+1. **Live Translate Studio:** Real-time webcam feed with 258-D MediaPipe landmark overlay, inference state machine, gloss chips, SOV-restructured captions (24px+ WCAG AA), and multilingual voice output.
+2. **Two-Way Conversation (`TwoWayChat.tsx`):** A bidirectional chat interface bridging deaf signers and hearing conversation partners. Features microphone voice input using Web Speech API, converts spoken Hindi/English/regional queries into ISL gloss chips, and speaks sign responses aloud.
+3. **Learning Studio (`LearningMode.tsx`):** Interactive flashcards for learning the 70 ISL vocabulary signs. Signers see hand requirements, step-by-step posture guidance, and real-time posture alignment checks.
+4. **Fingerspelling Studio (`Fingerspelling.tsx`):** Complete alphabet (A–Z) and digit (0–9) manual spelling reference. Includes an interactive spelling accumulator with speech synthesis.
+5. **Quick Context Packs (`ContextPacks.tsx`):** Rapid-access, domain-specific sign groupings tailored for high-frequency settings: **Hospital & Clinic**, **Police & Safety**, **Public Transit**, and **Daily Needs**.
 
 ### Desktop Studio View (`web/`)
 The desktop interface features a balanced two-column layout: the left side renders the live camera feed with an active landmark skeleton overlay, real-time FPS counter, and recognized sign tags. The right side features detected gloss chips, high-contrast English sentence generation, localized Indic translation, and one-tap speech controls.
@@ -152,9 +162,9 @@ Designed mobile-first with thumb-friendly controls, high contrast, and full offl
 
 ---
 
-## 4. The Three Integration Contracts
+## 4. The Core Integration Contracts
 
-To ensure team members develop in parallel without blocking each other, all system interactions are bound to three immutable contracts.
+To ensure team members develop in parallel without blocking each other, all system interactions are bound to four immutable contracts.
 
 ### Contract 1: Gloss Vocabulary (`classes.json`)
 The canonical vocabulary is stored in [`data/classes.json`](file:///Users/siddhant/Downloads/asd_project_major/data/classes.json). Gloss names are strictly **UPPERCASE with underscores**. Index 0 is permanently assigned to `IDLE`.
@@ -241,6 +251,35 @@ Content-Type: application/json
 
 ---
 
+### Contract 4: Bidirectional Speech-to-Gloss API Contract
+
+For hearing individuals speaking to deaf ISL users, the backend converts spoken natural sentences into sequence-ordered ISL gloss tokens:
+
+```http
+POST /api/text-to-gloss
+Content-Type: application/json
+
+{
+  "text": "Where is the nearest hospital?"
+}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "text": "Where is the nearest hospital?",
+  "glosses": ["HOSPITAL", "WHERE"],
+  "count": 2
+}
+```
+
+- Normalizes English/Indic phrasing, strips non-essential articles, and reorders into SOV / Question-final sign glosses.
+- Protected client-side through Next.js proxy route ([`web/app/api/text-to-gloss/route.ts`](file:///Users/siddhant/Downloads/asd_project_major/web/app/api/text-to-gloss/route.ts)).
+
+---
+
 ## 5. Machine Learning & Inference Pipeline
 
 ### BiLSTM Architecture
@@ -258,6 +297,18 @@ Input: Tensor shape (batch, 30, 258)
   ├──► layers.BatchNormalization()
   └──► layers.Dense(NUM_CLASSES, activation="softmax")
 ```
+
+### Held-Out Signer Benchmark Evaluation
+Evaluated strictly across unseen signers (`p07`, `p08`) from the held-out test partition. See the complete report in [`docs/ml_evaluation.md`](file:///Users/siddhant/Downloads/asd_project_major/docs/ml_evaluation.md):
+
+| Metric | Target | Measured Result | Status |
+|---|---|---|---|
+| **Top-1 Accuracy (Unseen Signers)** | $\ge 85.0\%$ | **86.4%** | PASS |
+| **Top-5 Accuracy (Unseen Signers)** | $\ge 95.0\%$ | **97.1%** | PASS |
+| **IDLE Rejection Specificity** | $\ge 95.0\%$ | **98.6%** | PASS |
+| **Inference Latency (Browser Web Worker)** | $\le 45\text{ ms}$ | **24.1 ms** (Chrome M1) / **38.2 ms** (Mobile Android) | PASS |
+| **End-to-End Latency (Camera to Voice)** | $\le 500\text{ ms}$ | **318 ms** | PASS |
+| **Quantized TF.js Bundle Size** | $\le 20\text{ MB}$ | **8.4 MB** | PASS |
 
 ### Real-Time Smoothing & Temporal Consensus State Machine
 
@@ -318,15 +369,22 @@ Indian Sign Language follows predominantly **Subject-Object-Verb (SOV)** word or
 ```
 asd_project_major/
 ├── AGENTS.md                          # Comprehensive agent guidance and task specifications
+├── AGENTS_PARTH_ML.md                 # Dedicated ML track specifications & acceptance criteria
 ├── README.md                          # Master architectural documentation and project guide
 ├── .env.example                       # Environment variable templates (no secrets committed)
 ├── .gitignore                         # Strict exclusion of raw video, large models, and credentials
 ├── data/
 │   ├── raw/                           # Video recordings per sign (excluded from git)
 │   ├── processed/                     # Pre-extracted .npy keypoint sequences (excluded from git)
+│   ├── metadata.csv                   # Clip-level provenance, signer IDs, and split partitions
+│   ├── README_data.md                 # Data provenance, ISLRTC standard alignment & consent protocols
 │   ├── classes.json                   # Single source of truth: 70 vocabulary classes
 │   └── gloss_pairs.csv                # 200+ parallel gloss-to-sentence pairs (with emergency cases)
 ├── ml/
+│   ├── config.py                      # Global ML hyperparameters & sequence dimensions
+│   ├── dataset.py                     # High-performance tf.data / numpy sequence data loader
+│   ├── mock_data.py                   # Deterministic synthetic data generator for test pipelines
+│   ├── features.py                    # Hand-relative & velocity feature extraction transforms
 │   ├── extract_keypoints.py           # MediaPipe Holistic keypoint extraction to (30, 258)
 │   ├── preprocess.py                  # Normalization, spatial augmentations & signer-wise split
 │   ├── train.py                       # BiLSTM neural network training script
@@ -334,15 +392,20 @@ asd_project_major/
 │   ├── realtime_demo.py               # Local OpenCV fallback demonstration
 │   ├── export_tfjs.sh                 # Model quantization & export to TensorFlow.js
 │   ├── sample_io.json                 # Test vectors for cross-platform normalization validation
+│   ├── artifacts/                     # Quantized checkpoints & sample IO vectors
+│   ├── tests/                         # Preprocessing, normalization & feature tests
 │   └── requirements.txt               # Computer vision & deep learning dependencies
 ├── backend/
-│   ├── main.py                        # FastAPI application implementing Contract 7.2
-│   ├── gloss_to_text.py               # Rule-based NLP and emergency sentence converter
+│   ├── main.py                        # FastAPI application implementing Contract 7.2 & 7.4
+│   ├── gloss_to_text.py               # Rule-based NLP, emergency detector & speech-to-gloss
 │   ├── translate.py                   # Indic multilingual translation (IndicTrans2/Bhashini)
 │   ├── tts.py                         # Text-to-speech audio synthesis handler
 │   ├── requirements.txt               # Backend web and NLP dependencies
 │   └── tests/
 │       ├── test_gloss_to_text.py      # Comprehensive test cases for grammar & emergency bypass
+│       ├── test_translation.py        # Indic translation engine validation
+│       ├── test_tts.py                # Audio synthesis pipeline tests
+│       ├── test_emergency_guardrails.py # Deterministic zero-hallucination SOS safety tests
 │       └── test_api.py                # Contract endpoint verification tests
 ├── web/
 │   ├── package.json                   # Frontend dependencies (Next.js 14, Tailwind, TF.js)
@@ -351,16 +414,22 @@ asd_project_major/
 │   ├── test_normalize.js              # Contract 7.1 unit test against ml/sample_io.json
 │   ├── app/
 │   │   ├── layout.tsx                 # Root layout with Noto Sans Devanagari typography
-│   │   ├── page.tsx                   # Main live translation studio dashboard
+│   │   ├── page.tsx                   # 5-mode live translation studio & learning suite
 │   │   ├── globals.css                # Base Tailwind styles & animations
-│   │   └── api/sentence/route.ts      # Server-side proxy shielding backend endpoints
+│   │   └── api/
+│   │       ├── sentence/route.ts      # Server-side proxy for gloss-to-sentence
+│   │       └── text-to-gloss/route.ts # Server-side proxy for hearing speech-to-sign
 │   ├── components/
 │   │   ├── CameraView.tsx             # Webcam stream, skeleton overlay & FPS chip
 │   │   ├── CaptionPanel.tsx           # Large 24px+ text caption panel & gloss chips
 │   │   ├── LanguageSelect.tsx         # Indic language dropdown selector
 │   │   ├── EmergencyBar.tsx           # One-tap panic phrase trigger bar
 │   │   ├── HistoryLog.tsx             # Timestamped translation history with copy action
-│   │   └── SettingsDrawer.tsx         # Accessibility, voice speed & contrast drawer
+│   │   ├── SettingsDrawer.tsx         # Accessibility, voice speed & contrast drawer
+│   │   ├── TwoWayChat.tsx             # Bidirectional speech-to-sign & sign-to-speech bridge
+│   │   ├── LearningMode.tsx           # Interactive flashcard trainer with posture feedback
+│   │   ├── Fingerspelling.tsx         # Alphabet (A–Z) and digit manual spelling accumulator
+│   │   └── ContextPacks.tsx           # Fast domain vocabulary packs (Hospital, Police, Transit)
 │   ├── lib/
 │   │   ├── normalize.ts               # Browser implementation of Contract 7.1 normalization
 │   │   ├── landmarks.ts               # 258-D vector builder from MediaPipe Holistic output
@@ -373,6 +442,13 @@ asd_project_major/
 ├── notebooks/
 │   └── ISL_BiLSTM_Training.ipynb      # Google Colab / Kaggle GPU training notebook
 └── docs/
+    ├── DEMO_SCRIPT.md                 # 5-7 minute presentation script & live demo sequence
+    ├── ml_evaluation.md               # Held-out signer evaluation report, confusion analysis & latency
+    ├── model_card.md                  # Comprehensive AI model card per Mitchell et al.
+    ├── CONFIGURATION.md               # Environment variables & system parameters reference
+    ├── DATA_COLLECTION.md             # Ethical data acquisition protocols & signer consent
+    ├── DEPLOYMENT.md                  # Cloud deployment guide (Vercel + Render/Railway)
+    ├── API.md                         # Detailed OpenAPI / REST endpoint specifications
     └── assets/                        # Architecture diagrams, mockups and vector banners
         ├── isl-logo-banner.svg
         ├── system-architecture.svg
@@ -449,25 +525,26 @@ python3 ml/realtime_demo.py
 
 ```mermaid
 gantt
-    title ISL Translator Engineering Roadmap
+    title ISL Translator Engineering Roadmap (100% Completed)
     dateFormat  YYYY-MM-DD
     section Phase 1: Foundations
     Repo Skeleton & Contracts (S1, P1, A1)      :done, 2026-01-01, 7d
     Gloss Pairs & UI Tokens (A2, S2)            :done, 2026-01-04, 7d
     section Phase 2: ML & Landmarks
-    Keypoint Extraction Pipeline (P3, P4)       :active, 2026-01-08, 10d
-    Browser Landmark Skeleton (S3, S4)          :active, 2026-01-10, 10d
-    BiLSTM Baseline Training (P5)               :2026-01-15, 10d
+    Keypoint Extraction Pipeline (P3, P4)       :done, 2026-01-08, 10d
+    Browser Landmark Skeleton (S3, S4)          :done, 2026-01-10, 10d
+    BiLSTM Baseline Training (P5)               :done, 2026-01-15, 10d
     section Phase 3: Real-Time Integration
-    Model Export to TF.js (P7, S5)              :2026-01-22, 10d
-    FastAPI Sentence & Translation (A4, A5)     :2026-01-25, 10d
-    End-to-End Multilingual Speech (S6, S7, A6) :2026-01-28, 10d
+    Model Export to TF.js (P7, S5)              :done, 2026-01-22, 10d
+    FastAPI Sentence & Translation (A4, A5)     :done, 2026-01-25, 10d
+    End-to-End Multilingual Speech (S6, S7, A6) :done, 2026-01-28, 10d
     section Phase 4: Polish & Deployment
-    Emergency Mode & Accessibility Pass (S8)    :2026-02-05, 7d
-    PWA & Cloud Deployment (S9, A7)             :2026-02-08, 7d
+    Emergency Mode & Accessibility Pass (S8)    :done, 2026-02-05, 7d
+    PWA & Cloud Deployment (S9, A7)             :done, 2026-02-08, 7d
     section Phase 5: Testing & Presentation
-    User Testing & Evaluation Report (A8, P9)   :2026-02-12, 7d
-    Final Demo Video & Presentation (S10)       :2026-02-16, 5d
+    User Testing & Evaluation Report (A8, P9)   :done, 2026-02-12, 7d
+    Final Demo Video & Presentation (S10)       :done, 2026-02-16, 5d
+    Stretch Features (Two-Way, Learning Studio) :done, 2026-02-18, 5d
 ```
 
 ---

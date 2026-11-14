@@ -79,3 +79,22 @@ class SentenceResponse(BaseModel):
     def normalize_language(cls, value: object) -> object:
         """Trim and lowercase a language code before Literal validation."""
         return _normalize_language(value)
+
+
+class TextToGlossRequest(BaseModel):
+    """Validated request body for converting text into ISL glosses."""
+
+    text: str = Field(
+        ...,
+        max_length=200,
+        description="Spoken English or hearing user text",
+    )
+
+
+class TextToGlossResponse(BaseModel):
+    """Response body returned by the text-to-gloss endpoint."""
+
+    original_text: str = Field(description="Original spoken phrase")
+    glosses: list[str] = Field(
+        description="Ordered ISL Subject-Object-Verb gloss tokens"
+    )
