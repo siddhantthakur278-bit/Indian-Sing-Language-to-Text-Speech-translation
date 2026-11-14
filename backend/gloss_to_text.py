@@ -9,11 +9,11 @@ natural English sentences using:
 4. Optional LLM few-shot prompt enhancement when LLM_API_KEY is configured.
 """
 
-import os
 import re
-import json
 import logging
 from typing import List, Tuple, Optional
+
+from backend.llm import generate_text
 
 logger = logging.getLogger(__name__)
 
@@ -136,19 +136,9 @@ def convert_glosses_with_rules(glosses: List[str]) -> Tuple[Optional[str], bool]
 
 
 def query_llm_for_sentence(gloss_str: str) -> Optional[str]:
-    """Calls external LLM if API key is configured."""
-    api_key = os.getenv("LLM_API_KEY")
-    if not api_key:
-        return None
-
-    try:
-        import urllib.request
-        model = os.getenv("LLM_MODEL", "gemini-1.5-flash")
-        # Placeholder for external HTTP invocation
-        return None
-    except Exception as e:
-        logger.warning(f"LLM API query failed: {e}")
-        return None
+    """Use Gemini only for non-emergency glosses; leave failure to safe fallback."""
+    prompt = LLM_PROMPT_TEMPLATE.format(glosses=gloss_str)
+    return generate_text(prompt)
 
 
 def glosses_to_sentence(glosses: List[str]) -> Tuple[str, bool]:

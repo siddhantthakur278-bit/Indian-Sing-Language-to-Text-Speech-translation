@@ -6,6 +6,7 @@ Compatible with both pytest and python's built-in unittest framework.
 import unittest
 import sys
 import os
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -126,6 +127,28 @@ class TestGlossToText(unittest.TestCase):
             glosses_to_sentence(["ME", "DOCTOR", "NEED"]),
             ("I need to see a doctor urgently.", True),
         )
+
+    def test_unmatched_non_emergency_sequence_uses_gemini_enhancement(self):
+        with patch(
+            "gloss_to_text.generate_text",
+            return_value="I met my friend tomorrow.",
+        ) as generate_text:
+            result = glosses_to_sentence(["MEET", "FRIEND", "TOMORROW"])
+
+        self.assertEqual(result, ("I met my friend tomorrow.", False))
+        prompt = generate_text.call_args.args[0]
+        self.assertIn("Glosses: MEET FRIEND TOMORROW", prompt)
+        self.assertIn("Do not add new facts.", prompt)
+
+    def test_emergency_sequence_never_calls_gemini_adapter(self):
+        with patch(
+            "gloss_to_text.generate_text",
+            side_effect=AssertionError("Emergency input must bypass Gemini"),
+        ) as generate_text:
+            result = glosses_to_sentence(["HELP", "ME"])
+
+        self.assertEqual(result, ("Please help me immediately.", True))
+        generate_text.assert_not_called()
 
 
 if __name__ == "__main__":
