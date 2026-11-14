@@ -1,6 +1,8 @@
 """Tests for per-client API rate limiting."""
 
 from dataclasses import replace
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 
 import pytest
 from fastapi.testclient import TestClient
@@ -113,3 +115,23 @@ def test_retry_delay_tracks_oldest_request_in_sliding_window():
     assert limiter.try_acquire("client-a", 2, now=110.0) is None
     assert limiter.try_acquire("client-a", 2, now=120.0) == 41
     assert limiter.try_acquire("client-a", 2, now=160.25) is None
+
+
+def test_concurrent_requests_never_exceed_one_client_limit():
+    limiter = main_module.ClientRateLimiter()
+    request_count = 32
+    request_limit = 7
+    start = Barrier(request_count)
+
+    def request_quota(_: int) -> bool:
+        start.wait()
+        return limiter.try_acquire("shared-client", request_limit, now=100.0) is None
+
+    with ThreadPoolExecutor(max_workers=request_count) as executor:
+        allowed = list(executor.map(request_quota, range(request_count)))
+
+    assert sum(allowed) == request_limit
+    assert all(
+        limiter.try_acquire("shared-client", request_limit, now=100.0) is not None
+        for _ in range(2)
+    )

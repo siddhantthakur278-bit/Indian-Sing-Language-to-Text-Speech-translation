@@ -1,5 +1,7 @@
 """Tests for bounded caching of successful sentence API responses."""
 
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 from unittest.mock import Mock
 
 import pytest
@@ -118,3 +120,26 @@ def test_failed_response_is_not_cached(monkeypatch):
     assert succeeded.status_code == 200
     assert translate_mock.call_count == 2
     assert len(main_module.response_cache) == 1
+
+
+def test_cache_remains_consistent_during_concurrent_reads_and_writes():
+    cache = ResponseCache(max_entries=32)
+    worker_count = 16
+    start = Barrier(worker_count)
+
+    def exercise_cache(worker_id: int) -> None:
+        start.wait()
+        for iteration in range(100):
+            key = ((f"GLOSS_{worker_id}",), "en")
+            expected = {"sentence": f"sentence-{worker_id}", "count": iteration}
+            cache.put(key, expected)
+            result = cache.get(key)
+            assert result == expected
+
+            result["sentence"] = "mutated copy"
+            assert cache.get(key) == expected
+
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        list(executor.map(exercise_cache, range(worker_count)))
+
+    assert len(cache) == worker_count
