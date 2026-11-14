@@ -9,11 +9,11 @@ natural English sentences using:
 4. Optional LLM few-shot prompt enhancement when LLM_API_KEY is configured.
 """
 
-import os
 import re
-import json
 import logging
 from typing import List, Tuple, Optional
+
+from backend.llm import generate_text
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,6 @@ ISL word order is often Subject-Object-Verb; reorder and add small function word
 (is, the, to, a) as needed. Do not add new facts. Output only the sentence.
 
 Glosses: ME MARKET GO        -> I am going to the market.
-Glosses: YOU NAME WHAT       -> What is your name?
 Glosses: HELP ME HOSPITAL    -> Please help me, I need to go to the hospital.
 Glosses: {glosses}           -> """
 
@@ -38,6 +37,7 @@ EMERGENCY_TEMPLATES = {
     ("HELP", "ME", "HOSPITAL"): "Please help me, I need to go to the hospital.",
     ("DOCTOR", "CALL", "PLEASE"): "Please call a doctor immediately.",
     ("DOCTOR", "NEED"): "I need a doctor urgently.",
+    # Classification and urgency wording require ISL-domain-expert approval.
     ("ME", "DOCTOR", "NEED"): "I need to see a doctor urgently.",
     ("AMBULANCE", "CALL", "PLEASE"): "Please call an ambulance right away.",
     ("POLICE", "CALL", "PLEASE"): "Please call the police immediately.",
@@ -59,8 +59,6 @@ RULE_TEMPLATES = {
     ("PLEASE",): "Please.",
     ("WELCOME",): "You are welcome.",
     ("GOODBYE",): "Goodbye, take care.",
-    ("ME", "NAME", "WHAT"): "What is my name?",
-    ("YOU", "NAME", "WHAT"): "What is your name?",
     ("ME", "MARKET", "GO"): "I am going to the market.",
     ("ME", "HOME", "GO"): "I am going home.",
     ("ME", "SCHOOL", "GO"): "I am going to school.",
@@ -72,19 +70,12 @@ RULE_TEMPLATES = {
     ("TOILET", "WHERE"): "Where is the washroom?",
     ("TIME", "WHAT"): "What time is it?",
     ("ME", "UNDERSTAND"): "I understand.",
-    ("ME", "NOT", "UNDERSTAND"): "I do not understand.",
     ("PLEASE", "WAIT"): "Please wait a moment.",
     ("STOP", "PLEASE"): "Please stop here.",
     ("WRITE", "PLEASE"): "Please write it down.",
-    ("SPEAK", "SLOW", "PLEASE"): "Please speak slowly.",
-    ("YOU", "HELP", "ME", "CAN"): "Can you please help me?",
     ("WHEN", "COME"): "When will you come?",
     ("WHY", "GO"): "Why are you going?",
     ("HOW", "GO"): "How do I get there?",
-    ("WHAT", "HAPPEN"): "What happened?",
-    ("FAMILY", "WHERE"): "Where is my family?",
-    ("ME", "HUNGRY"): "I am hungry.",
-    ("ME", "THIRSTY"): "I am thirsty.",
 }
 
 
@@ -102,14 +93,9 @@ def convert_glosses_with_rules(glosses: List[str]) -> Tuple[Optional[str], bool]
     if tuple_key in EMERGENCY_TEMPLATES:
         return EMERGENCY_TEMPLATES[tuple_key], True
 
-    # 2. Check general exact templates
-    if tuple_key in RULE_TEMPLATES:
-        return RULE_TEMPLATES[tuple_key], False
-
-    # 3. Dynamic SOV heuristic matching
     upper_glosses = [g.upper() for g in glosses]
 
-    # Check emergency heuristics
+    # Emergency keywords take priority over every ordinary rule and heuristic.
     if is_emergency_sequence(upper_glosses):
         if "HOSPITAL" in upper_glosses and "GO" in upper_glosses:
             return "Please help me, I need to get to the hospital immediately.", True
@@ -123,6 +109,11 @@ def convert_glosses_with_rules(glosses: List[str]) -> Tuple[Optional[str], bool]
             return "I am in severe pain, please help.", True
         return "Emergency! Please help me immediately.", True
 
+    # Ordinary exact templates run only after emergency classification.
+    if tuple_key in RULE_TEMPLATES:
+        return RULE_TEMPLATES[tuple_key], False
+
+    # Ordinary dynamic SOV heuristic matching
     # Subject + Location + Verb heuristic (e.g. ME + X + GO)
     if len(upper_glosses) == 3 and upper_glosses[0] == "ME" and upper_glosses[2] == "GO":
         place = upper_glosses[1].capitalize()
@@ -145,19 +136,9 @@ def convert_glosses_with_rules(glosses: List[str]) -> Tuple[Optional[str], bool]
 
 
 def query_llm_for_sentence(gloss_str: str) -> Optional[str]:
-    """Calls external LLM if API key is configured."""
-    api_key = os.getenv("LLM_API_KEY")
-    if not api_key:
-        return None
-
-    try:
-        import urllib.request
-        model = os.getenv("LLM_MODEL", "gemini-1.5-flash")
-        # Placeholder for external HTTP invocation
-        return None
-    except Exception as e:
-        logger.warning(f"LLM API query failed: {e}")
-        return None
+    """Use Gemini only for non-emergency glosses; leave failure to safe fallback."""
+    prompt = LLM_PROMPT_TEMPLATE.format(glosses=gloss_str)
+    return generate_text(prompt, source_glosses=gloss_str.split())
 
 
 def glosses_to_sentence(glosses: List[str]) -> Tuple[str, bool]:

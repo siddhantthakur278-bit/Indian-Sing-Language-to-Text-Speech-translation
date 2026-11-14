@@ -6,10 +6,12 @@ Compatible with both pytest and python's built-in unittest framework.
 import unittest
 import sys
 import os
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from gloss_to_text import glosses_to_sentence, is_emergency_sequence, convert_glosses_with_rules, sentence_to_glosses
+from vocabulary import VOCABULARY
 
 
 class TestGlossToText(unittest.TestCase):
@@ -42,8 +44,6 @@ class TestGlossToText(unittest.TestCase):
             (["SORRY"], "I am sorry."),
             (["WELCOME"], "You are welcome."),
             (["GOODBYE"], "Goodbye, take care."),
-            (["YOU", "NAME", "WHAT"], "What is your name?"),
-            (["ME", "NAME", "WHAT"], "What is my name?"),
             (["ME", "MARKET", "GO"], "I am going to the market."),
             (["ME", "HOME", "GO"], "I am going home."),
             (["ME", "SCHOOL", "GO"], "I am going to school."),
@@ -56,7 +56,6 @@ class TestGlossToText(unittest.TestCase):
             (["PLEASE", "WAIT"], "Please wait a moment."),
             (["STOP", "PLEASE"], "Please stop here."),
             (["WRITE", "PLEASE"], "Please write it down."),
-            (["SPEAK", "SLOW", "PLEASE"], "Please speak slowly."),
         ]
         for glosses, expected in cases:
             sent, is_em = glosses_to_sentence(glosses)
@@ -96,6 +95,60 @@ class TestGlossToText(unittest.TestCase):
 
         # Empty string
         self.assertEqual(sentence_to_glosses(""), [])
+
+    def test_all_rule_and_emergency_template_tokens_are_official(self):
+        import gloss_to_text
+
+        for templates in (
+            gloss_to_text.RULE_TEMPLATES,
+            gloss_to_text.EMERGENCY_TEMPLATES,
+        ):
+            for gloss_sequence in templates:
+                self.assertTrue(
+                    set(gloss_sequence).issubset(VOCABULARY),
+                    f"Unsupported template tokens in {gloss_sequence}",
+                )
+
+        self.assertNotIn(("YOU", "HELP", "ME", "CAN"), gloss_to_text.RULE_TEMPLATES)
+        self.assertNotIn(("WHAT", "HAPPEN"), gloss_to_text.RULE_TEMPLATES)
+        self.assertNotIn(("FAMILY", "WHERE"), gloss_to_text.RULE_TEMPLATES)
+        self.assertNotIn(("ME", "HUNGRY"), gloss_to_text.RULE_TEMPLATES)
+        self.assertNotIn(("ME", "THIRSTY"), gloss_to_text.RULE_TEMPLATES)
+
+    def test_doctor_need_emergency_template_is_preserved_pending_expert_review(self):
+        import gloss_to_text
+
+        # Classification and urgency wording are not ISL-domain-expert approved.
+        self.assertEqual(
+            gloss_to_text.EMERGENCY_TEMPLATES[("ME", "DOCTOR", "NEED")],
+            "I need to see a doctor urgently.",
+        )
+        self.assertEqual(
+            glosses_to_sentence(["ME", "DOCTOR", "NEED"]),
+            ("I need to see a doctor urgently.", True),
+        )
+
+    def test_unmatched_non_emergency_sequence_uses_gemini_enhancement(self):
+        with patch(
+            "gloss_to_text.generate_text",
+            return_value="I met my friend tomorrow.",
+        ) as generate_text:
+            result = glosses_to_sentence(["MEET", "FRIEND", "TOMORROW"])
+
+        self.assertEqual(result, ("I met my friend tomorrow.", False))
+        prompt = generate_text.call_args.args[0]
+        self.assertIn("Glosses: MEET FRIEND TOMORROW", prompt)
+        self.assertIn("Do not add new facts.", prompt)
+
+    def test_emergency_sequence_never_calls_gemini_adapter(self):
+        with patch(
+            "gloss_to_text.generate_text",
+            side_effect=AssertionError("Emergency input must bypass Gemini"),
+        ) as generate_text:
+            result = glosses_to_sentence(["HELP", "ME"])
+
+        self.assertEqual(result, ("Please help me immediately.", True))
+        generate_text.assert_not_called()
 
 
 if __name__ == "__main__":

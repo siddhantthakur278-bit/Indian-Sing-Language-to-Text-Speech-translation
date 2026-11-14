@@ -5,23 +5,133 @@ Implements Integration Contract 7.2:
 - POST /api/sentence
 """
 
-import os
-import json
 import logging
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Request, status
+import math
+import time
+from collections import deque
+from threading import Lock
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, validator
-from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
 
-from gloss_to_text import glosses_to_sentence, sentence_to_glosses
-from translate import translate_text
-from tts import get_speech_audio
-
-load_dotenv()
+from .cache import ResponseCache
+from .config import settings
+from .gloss_to_text import glosses_to_sentence, sentence_to_glosses
+from .llm import is_configured as is_gemini_configured
+from .schemas import (
+    SentenceRequest,
+    SentenceResponse,
+    TextToGlossRequest,
+    TextToGlossResponse,
+)
+from .translate import TRANSLATION_MODE, TranslationProviderError, translate_text
+from .tts import get_speech_audio, get_tts_status
+from .vocabulary import VocabularyValidationError, validate_glosses
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
+
+RATE_LIMIT_WINDOW_SECONDS = 60.0
+MAX_TRACKED_CLIENTS = 10_000
+
+
+class ClientRateLimiter:
+    """Enforce a bounded, per-client sliding-window request limit."""
+
+    def __init__(self, max_clients: int = MAX_TRACKED_CLIENTS) -> None:
+        if max_clients < 1:
+            raise ValueError("max_clients must be greater than zero")
+        self._max_clients = max_clients
+        self._requests: dict[str, deque[float]] = {}
+        self._lock = Lock()
+
+    def _remove_expired(self, now: float) -> None:
+        cutoff = now - RATE_LIMIT_WINDOW_SECONDS
+        expired_clients = []
+        for client_id, timestamps in self._requests.items():
+            while timestamps and timestamps[0] <= cutoff:
+                timestamps.popleft()
+            if not timestamps:
+                expired_clients.append(client_id)
+        for client_id in expired_clients:
+            del self._requests[client_id]
+
+    def try_acquire(
+        self, client_id: str, limit: int, *, now: float | None = None
+    ) -> int | None:
+        """Consume quota or return the seconds until this client can retry."""
+        if limit < 1:
+            raise ValueError("limit must be greater than zero")
+
+        current_time = time.monotonic() if now is None else now
+        cutoff = current_time - RATE_LIMIT_WINDOW_SECONDS
+        with self._lock:
+            timestamps = self._requests.get(client_id)
+            if timestamps is not None:
+                while timestamps and timestamps[0] <= cutoff:
+                    timestamps.popleft()
+                if not timestamps:
+                    del self._requests[client_id]
+                    timestamps = None
+
+            if timestamps is None:
+                if len(self._requests) >= self._max_clients:
+                    self._remove_expired(current_time)
+                if len(self._requests) >= self._max_clients:
+                    oldest_expiry = min(
+                        entries[0] + RATE_LIMIT_WINDOW_SECONDS
+                        for entries in self._requests.values()
+                    )
+                    return max(1, math.ceil(oldest_expiry - current_time))
+                timestamps = deque()
+                self._requests[client_id] = timestamps
+
+            if len(timestamps) >= limit:
+                return max(
+                    1,
+                    math.ceil(
+                        timestamps[0] + RATE_LIMIT_WINDOW_SECONDS - current_time
+                    ),
+                )
+
+            timestamps.append(current_time)
+            return None
+
+    def allow_request(
+        self, client_id: str, limit: int, *, now: float | None = None
+    ) -> bool:
+        """Record a request if this client has remaining quota in the window."""
+        return self.try_acquire(client_id, limit, now=now) is None
+
+    def clear(self) -> None:
+        """Clear tracked request history."""
+        with self._lock:
+            self._requests.clear()
+
+
+rate_limiter = ClientRateLimiter()
+response_cache = ResponseCache()
+
+
+def _rate_limit_response(request: Request) -> JSONResponse | None:
+    """Return a 429 response when the direct client peer has exceeded its limit."""
+    client_id = request.client.host if request.client else "unknown"
+    limit = settings.rate_limit_per_min
+    retry_after = rate_limiter.try_acquire(client_id, limit)
+    if retry_after is not None:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "message": (
+                    "Rate limit exceeded. "
+                    f"Maximum {limit} requests per minute."
+                )
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
+    return None
+
 
 app = FastAPI(
     title="Indian Sign Language Translation API",
@@ -30,73 +140,53 @@ app = FastAPI(
 )
 
 # CORS Configuration
-allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
-allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins if allowed_origins else ["*"],
+    allow_origins=settings.allowed_origins or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load classes.json for validation
-CLASSES_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "classes.json")
-VALID_CLASSES = set()
-if os.path.exists(CLASSES_PATH):
-    try:
-        with open(CLASSES_PATH, "r") as f:
-            meta = json.load(f)
-            VALID_CLASSES = set(meta.get("classes", []))
-    except Exception as e:
-        logger.warning(f"Could not load classes.json from {CLASSES_PATH}: {e}")
-
-SUPPORTED_LANGUAGES = {"en", "hi", "mr", "ta", "bn", "te", "gu", "kn", "ml", "pa"}
-
-
-class SentenceRequest(BaseModel):
-    glosses: List[str] = Field(..., max_items=20, description="List of recognized ISL gloss tokens (up to 20)")
-    lang: str = Field(default="en", description="Target language short code (en, hi, mr, etc.)")
-
-    @validator("lang")
-    def validate_language(cls, v):
-        v = v.lower().strip()
-        if v not in SUPPORTED_LANGUAGES:
-            raise ValueError(f"Language '{v}' is not supported. Choose from {sorted(list(SUPPORTED_LANGUAGES))}")
-        return v
-
-    @validator("glosses")
-    def validate_gloss_tokens(cls, v):
-        if not v:
-            raise ValueError("Glosses list cannot be empty.")
-        if len(v) > 20:
-            raise ValueError("Cannot process more than 20 glosses in a single sequence.")
-        return v
-
-
-class SentenceResponse(BaseModel):
-    sentence: str = Field(..., description="Grammatically natural English sentence")
-    translated: str = Field(..., description="Sentence translated into target language")
-    lang: str = Field(..., description="Target language code")
-    emergency: bool = Field(..., description="Emergency safety flag (True if emergency detected)")
-    audio_url: Optional[str] = Field(default=None, description="Cloud TTS audio URL or null for browser speech")
-
-
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Service health probe endpoint."""
-    return {"status": "ok"}
+    """Report service liveness and configured backend feature modes."""
+    return {
+        "status": "ok",
+        "features": {
+            "gloss_to_sentence": (
+                "rules_with_gemini"
+                if is_gemini_configured()
+                else "rules_only"
+            ),
+            "translation": TRANSLATION_MODE,
+            "tts": get_tts_status(),
+        },
+    }
 
 
 @app.post("/api/sentence", response_model=SentenceResponse, tags=["Translation"])
-async def process_sentence(payload: SentenceRequest):
+async def process_sentence(
+    payload: SentenceRequest, request: Request
+) -> SentenceResponse | JSONResponse:
     """
     Transforms an ISL gloss sequence into natural English, performs target language translation,
     and returns speech parameters per Contract 7.2.
     """
-    glosses = payload.glosses
+    rate_limit_error = _rate_limit_response(request)
+    if rate_limit_error is not None:
+        return rate_limit_error
+
+    try:
+        glosses = validate_glosses(payload.glosses)
+    except VocabularyValidationError as exc:
+        return JSONResponse(status_code=400, content={"message": str(exc)})
+
     target_lang = payload.lang
+    cache_key = (tuple(glosses), target_lang)
+    cached_response = response_cache.get(cache_key)
+    if cached_response is not None:
+        return SentenceResponse.model_validate(cached_response)
 
     # Log gloss count and target language safely (NEVER log sensitive biometric data or video)
     logger.info(f"Processing request: {len(glosses)} glosses -> '{target_lang}'")
@@ -105,35 +195,45 @@ async def process_sentence(payload: SentenceRequest):
     sentence, is_emergency = glosses_to_sentence(glosses)
 
     # 2. Translate sentence to target language
-    translated = translate_text(sentence, target_lang)
+    try:
+        translated = translate_text(sentence, target_lang)
+    except TranslationProviderError as exc:
+        logger.error(
+            "Translation provider failed (%s)",
+            type(exc).__name__,
+        )
+        return JSONResponse(
+            status_code=502,
+            content={"message": "Translation service is unavailable."},
+        )
 
     # 3. Resolve TTS audio URL
     audio_url = get_speech_audio(translated, target_lang)
 
-    return SentenceResponse(
+    response = SentenceResponse(
         sentence=sentence,
         translated=translated,
         lang=target_lang,
         emergency=is_emergency,
         audio_url=audio_url
     )
+    response_cache.put(cache_key, response.model_dump())
+    return response
 
 
-class TextToGlossRequest(BaseModel):
-    text: str = Field(..., max_length=200, description="Spoken English or hearing user text")
+@app.post(
+    "/api/text-to-gloss",
+    response_model=TextToGlossResponse,
+    tags=["Two-Way Mode"],
+)
+async def convert_text_to_gloss(
+    payload: TextToGlossRequest, request: Request
+) -> TextToGlossResponse | JSONResponse:
+    """Convert hearing-user text into an ISL gloss sequence."""
+    rate_limit_error = _rate_limit_response(request)
+    if rate_limit_error is not None:
+        return rate_limit_error
 
-
-class TextToGlossResponse(BaseModel):
-    original_text: str = Field(..., description="Original spoken phrase")
-    glosses: List[str] = Field(..., description="Ordered ISL Subject-Object-Verb gloss tokens")
-
-
-@app.post("/api/text-to-gloss", response_model=TextToGlossResponse, tags=["Two-Way Mode"])
-async def convert_text_to_gloss(payload: TextToGlossRequest):
-    """
-    Two-Way Mode: converts hearing person's spoken text into an ISL gloss sequence
-    for animated avatar rendering or sign flashcards.
-    """
     text = payload.text
     glosses = sentence_to_glosses(text)
     return TextToGlossResponse(original_text=text, glosses=glosses)
@@ -141,4 +241,4 @@ async def convert_text_to_gloss(payload: TextToGlossRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)

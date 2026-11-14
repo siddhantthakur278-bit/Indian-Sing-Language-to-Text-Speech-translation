@@ -1,57 +1,57 @@
-# Deployment Runbook & Production Operations
+# Deployment preparation
 
-> **Owners:** Siddhant (Frontend & Integrator) • Abhi (Backend & Speech)
+This document describes a deployment target, not a completed deployment. No
+production backend or frontend URL is currently verified.
 
----
+## Architecture target
 
-## 1. Production Architecture Overview
+- Next.js frontend can be deployed separately (for example, on Vercel).
+- FastAPI backend can run in the supplied Dockerfile on a Python container host.
+- Browser camera access requires HTTPS in production.
 
-The system is deployed using a decoupled jamstack architecture:
-- **Frontend App:** Next.js 14 hosted on **Vercel** edge network.
-- **Backend Service:** FastAPI Python service hosted on **Render / Railway / Hugging Face Spaces**.
-- **Static Model Files:** TensorFlow.js graph model served via CDN or public asset cache.
+## Backend environment
 
----
+Set environment variables in the hosting provider's secret/configuration store;
+do not upload `.env` or commit credentials.
 
-## 2. Frontend Deployment (Vercel)
-
-### Crucial Requirement: HTTPS
-Browser webcam access via `navigator.mediaDevices.getUserMedia` **mandates HTTPS**. Vercel provides automatic SSL certificates for all preview and production deployments.
-
-### Steps:
-1. Link your GitHub repository in the [Vercel Dashboard](https://vercel.com).
-2. Set the **Root Directory** to `web`.
-3. Configure Environment Variables:
-   - `BACKEND_URL`: URL of the deployed FastAPI backend (e.g. `https://isl-api.onrender.com`).
-4. Trigger Build:
-   - Framework preset: `Next.js`
-   - Build command: `npm run build`
-   - Output directory: `.next`
-
----
-
-## 3. Backend Deployment (Render / Railway / Docker)
-
-### Environment Variables (.env):
-```bash
-ALLOWED_ORIGINS=https://your-frontend.vercel.app,http://localhost:3000
-LLM_API_KEY=your_optional_llm_key
-BHASHINI_USER_ID=your_bhashini_id
-BHASHINI_API_KEY=your_bhashini_key
+```text
+ALLOWED_ORIGINS=https://<your-frontend-host>
+RATE_LIMIT_PER_MIN=60
+LLM_API_KEY=
+LLM_MODEL=gemini-2.5-flash
 ```
 
-### Docker Startup:
+`LLM_API_KEY` is optional. Without it, the backend uses rules and deterministic
+fallback. The Gemini model can be overridden with `LLM_MODEL`. Bhashini variables
+are not required or used by the current implementation; no cloud translation or
+cloud TTS integration is enabled.
+
+See [backend configuration](./BACKEND_CONFIGURATION.md) for all settings.
+
+## Docker
+
+Build from the repository root because the Dockerfile copies backend code and
+the data files from the build context:
+
 ```bash
-docker build -t isl-backend:latest -f backend/Dockerfile .
-docker run -p 8000:8000 --env-file .env isl-backend:latest
+docker build -t isl-backend:local -f backend/Dockerfile .
+docker run --rm -p 8000:8000 isl-backend:local
 ```
 
----
+To pass deployment-provided variables, use the platform's environment settings.
+For local development only, `--env-file .env` may be added when `.env` exists.
 
-## 4. Verification Checklist Before Launch
+The container entrypoint is `uvicorn backend.main:app --host 0.0.0.0 --port 8000`.
+Verify locally with `GET /health`, `GET /docs`, and the backend test suite before
+deploying. A successful local/container check is not proof of a real deployment.
 
-- [ ] `GET /health` returns `{"status": "ok"}` on production URL.
-- [ ] Emergency phrases return `emergency: true` without timeout.
-- [ ] Camera stream renders skeleton overlay at 15+ FPS on mid-range Android phone.
-- [ ] Browser `speechSynthesis` voices load properly in Hindi and Marathi.
-- [ ] PWA installs successfully to device home screen.
+## Pre-deployment checklist
+
+- [ ] Configure the exact production frontend origin in `ALLOWED_ORIGINS`.
+- [ ] Decide whether optional Gemini processing is appropriate and disclose it.
+- [ ] Run `.venv/bin/python -m pytest backend/tests -v`.
+- [ ] Verify container startup and `/health` in an environment with Docker.
+- [ ] Verify a real deployment URL and health endpoint before advertising it.
+- [ ] Confirm Hindi/Marathi browser voices on target devices; browser voice
+  availability varies by platform.
+- [ ] Obtain ISL-domain-expert review of emergency language and classifications.
