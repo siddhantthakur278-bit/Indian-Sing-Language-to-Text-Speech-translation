@@ -187,3 +187,105 @@ def glosses_to_sentence(glosses: List[str]) -> Tuple[str, bool]:
     # 3. Graceful fallback: join words into readable sentence
     fallback = " ".join(clean_glosses).capitalize() + "."
     return fallback, False
+
+
+
+def sentence_to_glosses(text: str) -> List[str]:
+    """
+    Two-Way Mode Conversion: converts natural spoken sentence into an ISL gloss sequence.
+    Applies English-to-ISL SOV grammar rules and matches against canonical vocabulary.
+    """
+    if not text or not text.strip():
+        return []
+
+    clean = re.sub(r'[^a-zA-Z0-9\s]', '', text).upper()
+    words = clean.split()
+
+    # Direct word mapping to ISL gloss tokens
+    word_to_gloss = {
+        "I": "ME",
+        "ME": "ME",
+        "MY": "ME",
+        "YOU": "YOU",
+        "YOUR": "YOU",
+        "HE": "HE_SHE",
+        "SHE": "HE_SHE",
+        "WE": "WE",
+        "US": "WE",
+        "HOSPITAL": "HOSPITAL",
+        "DOCTOR": "DOCTOR",
+        "POLICE": "POLICE",
+        "AMBULANCE": "AMBULANCE",
+        "WATER": "WATER",
+        "FOOD": "FOOD",
+        "EAT": "EAT",
+        "DRINK": "DRINK",
+        "GO": "GO",
+        "GOING": "GO",
+        "COME": "COME",
+        "COMING": "COME",
+        "HELP": "HELP",
+        "PAIN": "PAIN",
+        "FIRE": "FIRE",
+        "HELLO": "HELLO",
+        "HI": "HELLO",
+        "THANKS": "THANK_YOU",
+        "THANK": "THANK_YOU",
+        "SORRY": "SORRY",
+        "PLEASE": "PLEASE",
+        "WELCOME": "WELCOME",
+        "GOODBYE": "GOODBYE",
+        "BYE": "GOODBYE",
+        "SCHOOL": "SCHOOL",
+        "MARKET": "MARKET",
+        "HOME": "HOME",
+        "WORK": "WORK",
+        "SLEEP": "SLEEP",
+        "WHAT": "WHAT",
+        "WHERE": "WHERE",
+        "WHEN": "WHEN",
+        "WHO": "WHO",
+        "WHY": "WHY",
+        "HOW": "HOW",
+        "WANT": "WANT",
+        "NEED": "NEED",
+        "UNDERSTAND": "UNDERSTAND",
+        "STOP": "STOP",
+        "WAIT": "WAIT",
+    }
+
+    gloss_tokens = []
+    # Identify subject, object, and verb for SOV reordering if possible
+    subjects = []
+    objects = []
+    verbs = []
+    questions = []
+
+    for w in words:
+        gloss = word_to_gloss.get(w)
+        if not gloss:
+            continue
+        if gloss in {"ME", "YOU", "HE_SHE", "WE"}:
+            subjects.append(gloss)
+        elif gloss in {"GO", "COME", "EAT", "DRINK", "STOP", "WAIT"}:
+            verbs.append(gloss)
+        elif gloss in {"WHAT", "WHERE", "WHEN", "WHO", "WHY", "HOW"}:
+            questions.append(gloss)
+        else:
+            objects.append(gloss)
+
+    # In ISL, word order is Subject -> Object -> Verb -> Question Marker
+    reordered = subjects + objects + verbs + questions
+    # Fallback to in-order extraction if no structured tokens identified
+    if not reordered:
+        for w in words:
+            if w in word_to_gloss:
+                reordered.append(word_to_gloss[w])
+
+    # Deduplicate consecutive identical tokens
+    final_glosses = []
+    for g in reordered:
+        if not final_glosses or final_glosses[-1] != g:
+            final_glosses.append(g)
+
+    return final_glosses

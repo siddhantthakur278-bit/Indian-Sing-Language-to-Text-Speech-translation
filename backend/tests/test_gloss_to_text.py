@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from gloss_to_text import glosses_to_sentence, is_emergency_sequence, convert_glosses_with_rules
+from gloss_to_text import glosses_to_sentence, is_emergency_sequence, convert_glosses_with_rules, sentence_to_glosses
 
 
 class TestGlossToText(unittest.TestCase):
@@ -81,6 +81,21 @@ class TestGlossToText(unittest.TestCase):
         sent, is_em = glosses_to_sentence(["BOOK", "READ"])
         self.assertEqual(sent, "Book read.")
         self.assertFalse(is_em)
+
+    def test_sentence_to_glosses_two_way_mode(self):
+        # Spoken input: "I am going to the hospital"
+        glosses = sentence_to_glosses("I am going to the hospital")
+        self.assertIn("ME", glosses)
+        self.assertIn("HOSPITAL", glosses)
+        self.assertIn("GO", glosses)
+
+        # Spoken input: "Where is the doctor?"
+        glosses = sentence_to_glosses("Where is the doctor")
+        self.assertIn("DOCTOR", glosses)
+        self.assertIn("WHERE", glosses)
+
+        # Empty string
+        self.assertEqual(sentence_to_glosses(""), [])
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from dotenv import load_dotenv
 
-from gloss_to_text import glosses_to_sentence
+from gloss_to_text import glosses_to_sentence, sentence_to_glosses
 from translate import translate_text
 from tts import get_speech_audio
 
@@ -117,6 +117,26 @@ async def process_sentence(payload: SentenceRequest):
         emergency=is_emergency,
         audio_url=audio_url
     )
+
+
+class TextToGlossRequest(BaseModel):
+    text: str = Field(..., max_length=200, description="Spoken English or hearing user text")
+
+
+class TextToGlossResponse(BaseModel):
+    original_text: str = Field(..., description="Original spoken phrase")
+    glosses: List[str] = Field(..., description="Ordered ISL Subject-Object-Verb gloss tokens")
+
+
+@app.post("/api/text-to-gloss", response_model=TextToGlossResponse, tags=["Two-Way Mode"])
+async def convert_text_to_gloss(payload: TextToGlossRequest):
+    """
+    Two-Way Mode: converts hearing person's spoken text into an ISL gloss sequence
+    for animated avatar rendering or sign flashcards.
+    """
+    text = payload.text
+    glosses = sentence_to_glosses(text)
+    return TextToGlossResponse(original_text=text, glosses=glosses)
 
 
 if __name__ == "__main__":
