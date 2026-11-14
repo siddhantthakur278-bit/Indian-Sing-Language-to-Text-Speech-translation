@@ -15,10 +15,6 @@ Implements realistic physical variations for 3D landmarks per AGENTS.md Section 
 
 
 
-
-
-
-
 import math
 import random
 from typing import List
