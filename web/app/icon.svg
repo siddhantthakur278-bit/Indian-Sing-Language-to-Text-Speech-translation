@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#152340"/>
+  <g transform="translate(-1 2) scale(.55)">
+    <!-- Palm base -->
+    <path d="M45 88L30 74L34 58L44 56L54 58L63 64Z" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Fingers tracking skeleton -->
+    <path d="M30 74L22 62L17 51L14 41" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M34 58L32 44L31 34L30 25" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M44 56L44 41L44 30L44 20" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M54 58L56 44L57 35L58 27" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M63 64L67 54L69 47L71 40" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Joint dots -->
+    <circle cx="45" cy="88" r="6" fill="#f58220"/>
+    <circle cx="14" cy="41" r="6" fill="#f58220"/>
+    <circle cx="30" cy="25" r="6" fill="#f58220"/>
+    <circle cx="44" cy="20" r="6" fill="#f58220"/>
+    <circle cx="58" cy="27" r="6" fill="#f58220"/>
+    <circle cx="71" cy="40" r="6" fill="#f58220"/>
+    <!-- Speech sound wave arcs -->
+    <path d="M90.6 34.15 A16 16 0 0 1 90.6 53.85" fill="none" stroke="#f58220" stroke-width="7" stroke-linecap="round"/>
+    <path d="M100.1 26.8 A28 28 0 0 1 100.1 61.2" fill="none" stroke="#f58220" stroke-width="7" stroke-linecap="round"/>
+    <path d="M109.5 19.4 A40 40 0 0 1 109.5 68.6" fill="none" stroke="#f58220" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

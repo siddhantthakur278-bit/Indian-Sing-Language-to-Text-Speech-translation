@@ -1,21 +1,27 @@
 <div align="center">
 
-# 🇮🇳 Indian Sign Language to Text & Speech Translation System
-### Real-Time Assistive Communication Bridge for the Deaf & Hard-of-Hearing Community
+# 🇮🇳 Sanket (संकेत) – Sign to Speech
+### Real-Time Indian Sign Language to Text & Speech Translation System
 
+[![Live Deployment](https://img.shields.io/badge/Live_App-isl--translator--flax.vercel.app-22d3ee?style=for-the-badge&logo=vercel)](https://isl-translator-flax.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js%2014-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![MediaPipe](https://img.shields.io/badge/MediaPipe-Holistic-0FA3B1?style=for-the-badge&logo=google)](https://developers.google.com/mediapipe)
 [![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)](https://www.tensorflow.org/js)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-SQLite-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![WCAG AA](https://img.shields.io/badge/Accessibility-WCAG%20AA-success?style=for-the-badge)](https://www.w3.org/WAI/standards-guidelines/wcag/)
 
 <br/>
 
-![ISL Translator Banner](docs/assets/isl-logo-banner.svg)
+<a href="https://isl-translator-flax.vercel.app">
+  <img src="docs/assets/sanket-logo.svg" width="160" height="160" alt="Sanket Logo" style="border-radius: 26%;" />
+</a>
+
+<br/>
+
+### 🚀 **Live Production Application:** [https://isl-translator-flax.vercel.app](https://isl-translator-flax.vercel.app)
+*Interactive Brand Identity Showcase: [docs/sanket-brand.html](docs/sanket-brand.html) or [isl-translator-flax.vercel.app/sanket.html](https://isl-translator-flax.vercel.app/sanket.html)*
 
 <br/>
 

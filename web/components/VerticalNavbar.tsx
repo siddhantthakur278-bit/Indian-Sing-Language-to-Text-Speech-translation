@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Video,
   MessageSquare,
@@ -96,21 +97,20 @@ export const VerticalNavbar: React.FC<VerticalNavbarProps> = ({
       <div>
         <div className="p-5 border-b border-space-800">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-gold-500 via-ruby-500 to-white p-0.5 shadow-lg group">
-              <div className="w-full h-full bg-space-950 rounded-[10px] flex items-center justify-center font-black text-sm tracking-wider gold-gradient-text">
-                ISL
-              </div>
+            <div className="relative w-10 h-10 rounded-xl bg-space-950 border border-gold-500/40 p-1 shadow-lg group overflow-hidden">
+              <Image src="/icon.svg" alt="Sanket Logo" width={36} height={36} className="w-full h-full object-contain" />
               <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-ruby-500 border-2 border-space-900 animate-pulse" />
             </div>
 
             <div>
               <h1 className="text-sm font-extrabold text-white flex items-center gap-1.5 tracking-tight">
-                ISL Translator
+                <span>Sanket</span>
+                <span className="text-gold-400 font-bold text-xs">संकेत</span>
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-sparkle" />
-                <span className="text-[10px] font-semibold text-gold-300/90 tracking-wide uppercase">
-                  Gold & Ruby Edition
+                <span className="text-[10px] font-semibold text-slate-300 tracking-wide">
+                  Sign to Speech &bull; Live
                 </span>
               </div>
             </div>

@@ -1,15 +1,15 @@
 {
-  "name": "Indian Sign Language to Speech Neural Studio",
-  "short_name": "ISL Neural Studio",
-  "description": "Real-time AI bridge translating ISL signs to multilingual Indian text and speech with local on-device privacy",
+  "name": "Sanket (संकेत) – Sign to Speech",
+  "short_name": "Sanket",
+  "description": "Real-time AI bridge translating Indian Sign Language (ISL) gestures to multilingual text and speech with on-device privacy",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#05070A",
-  "theme_color": "#D4AF37",
+  "theme_color": "#152340",
   "icons": [
     {
       "src": "/icon.svg",
-      "sizes": "192x192 512x512",
+      "sizes": "64x64 192x192 512x512",
       "type": "image/svg+xml"
     }
   ]

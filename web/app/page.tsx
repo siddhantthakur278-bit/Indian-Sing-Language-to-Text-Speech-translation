@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { CameraView } from "@/components/CameraView";
 import { CaptionPanel } from "@/components/CaptionPanel";
 import { LanguageSelect, SUPPORTED_LANGUAGES } from "@/components/LanguageSelect";
@@ -446,17 +447,16 @@ export default function Home() {
         <header className="w-full bg-space-900/80 border-b border-gold-500/20 px-4 md:px-8 py-3.5 flex items-center justify-between sticky top-0 z-20 backdrop-blur-xl">
           {/* Mobile Logo Brand */}
           <div className="flex items-center gap-3">
-            <div className="md:hidden w-8 h-8 rounded-xl bg-gradient-to-tr from-gold-500 to-ruby-500 p-0.5 shadow-md">
-              <div className="w-full h-full bg-space-950 rounded-[9px] flex items-center justify-center font-black text-xs gold-gradient-text">
-                ISL
-              </div>
+            <div className="md:hidden w-8 h-8 rounded-xl bg-space-950 border border-gold-500/40 p-0.5 shadow-md overflow-hidden">
+              <Image src="/icon.svg" alt="Sanket Logo" width={32} height={32} className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-sm md:text-base font-extrabold tracking-tight text-white flex items-center gap-2">
-                <span>ISL Neural Studio</span>
+                <span>Sanket</span>
+                <span className="text-gold-400 font-bold text-xs">संकेत</span>
                 <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold-500/20 text-gold-300 border border-gold-500/40">
                   <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-sparkle" />
-                  99.8% Precision
+                  Sign to Speech
                 </span>
               </h1>
             </div>
