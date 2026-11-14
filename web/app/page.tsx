@@ -8,6 +8,10 @@ import { EmergencyBar } from "@/components/EmergencyBar";
 import { HistoryLog, HistoryItem } from "@/components/HistoryLog";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { AriaAnnouncer } from "@/components/AriaAnnouncer";
+import { TwoWayChat } from "@/components/TwoWayChat";
+import { LearningMode } from "@/components/LearningMode";
+import { Fingerspelling } from "@/components/Fingerspelling";
+import { ContextPacks } from "@/components/ContextPacks";
 import { speakText, stopSpeaking } from "@/lib/speech";
 import { requestSentenceTranslation } from "@/lib/api";
 import { soundEffects } from "@/lib/audioFeedback";
@@ -19,6 +23,7 @@ export default function Home() {
   const [confidence, setConfidence] = useState<number>(0.94);
   const [handsDetected, setHandsDetected] = useState<boolean>(true);
   const [fps, setFps] = useState<number>(30);
+  const [activeTab, setActiveTab] = useState<"live" | "twoway" | "learning" | "fingerspelling" | "context">("live");
 
   // Linguistic & Translation State
   const [targetLang, setTargetLang] = useState<string>("hi");
@@ -54,6 +59,51 @@ export default function Home() {
 
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === targetLang) || SUPPORTED_LANGUAGES[0];
 
+  // Handle manual speak
+  const handleSpeak = useCallback(() => {
+    if (!translatedSentence) return;
+    setIsSpeaking(true);
+    speakText(
+      translatedSentence,
+      targetLang,
+      speechRate,
+      () => setIsSpeaking(false),
+      () => setIsSpeaking(false)
+    );
+  }, [translatedSentence, targetLang, speechRate]);
+
+  // Handle emergency phrase trigger
+  const handleEmergencyTrigger = useCallback((phrase: string, translationHi: string) => {
+    setGlosses(["HELP", "EMERGENCY"]);
+    setEnglishSentence(phrase);
+    setTranslatedSentence(translationHi);
+
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+    setHistory((prev) => [
+      {
+        id: Math.random().toString(),
+        time: timeStr,
+        english: phrase,
+        translated: translationHi,
+        lang: "hi",
+        isEmergency: true,
+      },
+      ...prev,
+    ]);
+
+    setIsSpeaking(true);
+    speakText(translationHi, "hi", 1.0, () => setIsSpeaking(false), () => setIsSpeaking(false));
+  }, []);
+
+  const handleClear = useCallback(() => {
+    stopSpeaking();
+    setGlosses([]);
+    setEnglishSentence("");
+    setTranslatedSentence("");
+    setIsSpeaking(false);
+  }, []);
+
   // Global keyboard shortcuts for accessibility
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,7 +125,8 @@ export default function Home() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [translatedSentence, targetLang, speechRate]);
+  }, [handleSpeak, handleClear, handleEmergencyTrigger]);
+
   const triggerTranslation = useCallback(async (currentGlosses: string[], lang: string) => {
     if (currentGlosses.length === 0) return;
     setIsTranslating(true);
@@ -109,51 +160,6 @@ export default function Home() {
       setIsTranslating(false);
     }
   }, [autoSpeak, speechRate]);
-
-  // Handle manual speak
-  const handleSpeak = () => {
-    if (!translatedSentence) return;
-    setIsSpeaking(true);
-    speakText(
-      translatedSentence,
-      targetLang,
-      speechRate,
-      () => setIsSpeaking(false),
-      () => setIsSpeaking(false)
-    );
-  };
-
-  // Handle emergency phrase trigger
-  const handleEmergencyTrigger = (phrase: string, translationHi: string) => {
-    setGlosses(["HELP", "EMERGENCY"]);
-    setEnglishSentence(phrase);
-    setTranslatedSentence(translationHi);
-
-    const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-    setHistory((prev) => [
-      {
-        id: Math.random().toString(),
-        time: timeStr,
-        english: phrase,
-        translated: translationHi,
-        lang: "hi",
-        isEmergency: true,
-      },
-      ...prev,
-    ]);
-
-    setIsSpeaking(true);
-    speakText(translationHi, "hi", 1.0, () => setIsSpeaking(false), () => setIsSpeaking(false));
-  };
-
-  const handleClear = () => {
-    stopSpeaking();
-    setGlosses([]);
-    setEnglishSentence("");
-    setTranslatedSentence("");
-    setIsSpeaking(false);
-  };
 
   const handleDeleteLastGloss = () => {
     if (glosses.length > 0) {
@@ -209,41 +215,101 @@ export default function Home() {
 
       {/* Main Translation Studio Workspace */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-6">
+        {/* Navigation Mode Switcher Bar */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+          {[
+            { id: "live", label: "📹 Live Translate", desc: "Camera ISL Sign Translation" },
+            { id: "twoway", label: "💬 Two-Way Chat", desc: "Deaf ↔ Hearing Conversation" },
+            { id: "learning", label: "🎓 Learning Studio", desc: "Interactive Sign Practice" },
+            { id: "fingerspelling", label: "🔤 Fingerspelling", desc: "A-Z & Numbers 0-9" },
+            { id: "context", label: "🎒 Context Packs", desc: "Hospital, Police & Travel" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeTab === tab.id
+                  ? "bg-teal text-navy-dark shadow-md"
+                  : "bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60"
+              }`}
+            >
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Top Emergency Trigger Bar */}
         <EmergencyBar onTriggerEmergency={handleEmergencyTrigger} />
 
-        {/* 2-Column Desktop Grid / Stacked Mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left: Camera Feed & Skeleton Detection */}
-          <section className="lg:col-span-7 flex flex-col gap-3">
-            <CameraView
-              detectedSign={detectedSign}
-              confidence={confidence}
-              handsDetected={handsDetected}
-              fps={fps}
-              isActive={isCameraActive}
-              onToggleActive={() => setIsCameraActive(!isCameraActive)}
-            />
-          </section>
+        {/* Mode 1: Live Translation Grid */}
+        {activeTab === "live" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fadeIn">
+            {/* Left: Camera Feed & Skeleton Detection */}
+            <section className="lg:col-span-7 flex flex-col gap-3">
+              <CameraView
+                detectedSign={detectedSign}
+                confidence={confidence}
+                handsDetected={handsDetected}
+                fps={fps}
+                isActive={isCameraActive}
+                onToggleActive={() => setIsCameraActive(!isCameraActive)}
+              />
+            </section>
 
-          {/* Right: Caption, Translation & Voice Panel */}
-          <section className="lg:col-span-5 flex flex-col gap-4">
-            <CaptionPanel
-              glosses={glosses}
-              englishSentence={englishSentence}
-              translatedSentence={translatedSentence}
-              targetLangName={currentLangObj.name}
-              isTranslating={isTranslating}
-              onClear={handleClear}
-              onDeleteLastGloss={handleDeleteLastGloss}
-              onSpeak={handleSpeak}
-              isSpeaking={isSpeaking}
-            />
+            {/* Right: Caption, Translation & Voice Panel */}
+            <section className="lg:col-span-5 flex flex-col gap-4">
+              <CaptionPanel
+                glosses={glosses}
+                englishSentence={englishSentence}
+                translatedSentence={translatedSentence}
+                targetLangName={currentLangObj.name}
+                isTranslating={isTranslating}
+                onClear={handleClear}
+                onDeleteLastGloss={handleDeleteLastGloss}
+                onSpeak={handleSpeak}
+                isSpeaking={isSpeaking}
+              />
 
-            {/* Translation History Log */}
-            <HistoryLog items={history} onClear={() => setHistory([])} />
-          </section>
-        </div>
+              {/* Translation History Log */}
+              <HistoryLog items={history} onClear={() => setHistory([])} />
+            </section>
+          </div>
+        )}
+
+        {/* Mode 2: Two-Way Communication Bridge */}
+        {activeTab === "twoway" && (
+          <div className="animate-fadeIn">
+            <TwoWayChat onSpeak={handleSpeak} />
+          </div>
+        )}
+
+        {/* Mode 3: Interactive Learning Studio */}
+        {activeTab === "learning" && (
+          <div className="animate-fadeIn">
+            <LearningMode />
+          </div>
+        )}
+
+        {/* Mode 4: Fingerspelling & Number Matrix */}
+        {activeTab === "fingerspelling" && (
+          <div className="animate-fadeIn">
+            <Fingerspelling />
+          </div>
+        )}
+
+        {/* Mode 5: Scenario Context Packs */}
+        {activeTab === "context" && (
+          <div className="animate-fadeIn">
+            <ContextPacks
+              onSelectPhrase={(g, en, hi) => {
+                setGlosses(g);
+                setEnglishSentence(en);
+                setTranslatedSentence(hi);
+                setActiveTab("live");
+              }}
+            />
+          </div>
+        )}
       </main>
 
       {/* Footer & Accreditations */}

@@ -85,12 +85,12 @@ export class SignSequenceBuffer {
 
       let topIndex = -1;
       let topCount = 0;
-      for (const [idx, count] of voteCounts.entries()) {
+      voteCounts.forEach((count, idx) => {
         if (count > topCount) {
           topIndex = idx;
           topCount = count;
         }
-      }
+      });
 
       // Check consensus, IDLE (index 0), and refractory cooldown
       if (
