@@ -103,5 +103,7 @@ Response (200):
 
 `RATE_LIMIT_PER_MIN` defaults to 60 and is applied across both POST endpoints.
 Client identity uses the direct ASGI peer address; arbitrary
-`X-Forwarded-For` values are ignored. In-memory rate-limit and cache state is
-per process and resets on restart.
+`X-Forwarded-For` values are ignored. HTTP 429 responses include a
+`Retry-After` header in seconds, calculated from the earliest request expiry in
+the current sliding window. In-memory rate-limit and cache state is per process
+and resets on restart.

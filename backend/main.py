@@ -6,6 +6,7 @@ Implements Integration Contract 7.2:
 """
 
 import logging
+import math
 import time
 from collections import deque
 from threading import Lock
@@ -56,10 +57,10 @@ class ClientRateLimiter:
         for client_id in expired_clients:
             del self._requests[client_id]
 
-    def allow_request(
+    def try_acquire(
         self, client_id: str, limit: int, *, now: float | None = None
-    ) -> bool:
-        """Record a request if this client has remaining quota in the window."""
+    ) -> int | None:
+        """Consume quota or return the seconds until this client can retry."""
         if limit < 1:
             raise ValueError("limit must be greater than zero")
 
@@ -78,15 +79,30 @@ class ClientRateLimiter:
                 if len(self._requests) >= self._max_clients:
                     self._remove_expired(current_time)
                 if len(self._requests) >= self._max_clients:
-                    return False
+                    oldest_expiry = min(
+                        entries[0] + RATE_LIMIT_WINDOW_SECONDS
+                        for entries in self._requests.values()
+                    )
+                    return max(1, math.ceil(oldest_expiry - current_time))
                 timestamps = deque()
                 self._requests[client_id] = timestamps
 
             if len(timestamps) >= limit:
-                return False
+                return max(
+                    1,
+                    math.ceil(
+                        timestamps[0] + RATE_LIMIT_WINDOW_SECONDS - current_time
+                    ),
+                )
 
             timestamps.append(current_time)
-            return True
+            return None
+
+    def allow_request(
+        self, client_id: str, limit: int, *, now: float | None = None
+    ) -> bool:
+        """Record a request if this client has remaining quota in the window."""
+        return self.try_acquire(client_id, limit, now=now) is None
 
     def clear(self) -> None:
         """Clear tracked request history."""
@@ -102,7 +118,8 @@ def _rate_limit_response(request: Request) -> JSONResponse | None:
     """Return a 429 response when the direct client peer has exceeded its limit."""
     client_id = request.client.host if request.client else "unknown"
     limit = settings.rate_limit_per_min
-    if not rate_limiter.allow_request(client_id, limit):
+    retry_after = rate_limiter.try_acquire(client_id, limit)
+    if retry_after is not None:
         return JSONResponse(
             status_code=429,
             content={
@@ -111,6 +128,7 @@ def _rate_limit_response(request: Request) -> JSONResponse | None:
                     f"Maximum {limit} requests per minute."
                 )
             },
+            headers={"Retry-After": str(retry_after)},
         )
     return None
 

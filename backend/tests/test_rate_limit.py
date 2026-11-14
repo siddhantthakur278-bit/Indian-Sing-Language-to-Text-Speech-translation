@@ -49,6 +49,7 @@ def test_request_over_configured_limit_returns_clear_429(monkeypatch):
     assert limited.json() == {
         "message": "Rate limit exceeded. Maximum 1 requests per minute."
     }
+    assert int(limited.headers["Retry-After"]) >= 1
 
 
 def test_different_clients_have_independent_limits(monkeypatch):
@@ -103,3 +104,12 @@ def test_limiter_bounds_tracked_client_state():
     assert limiter.allow_request("client-a", 1, now=100.0)
     assert not limiter.allow_request("client-b", 1, now=101.0)
     assert limiter.allow_request("client-b", 1, now=160.0)
+
+
+def test_retry_delay_tracks_oldest_request_in_sliding_window():
+    limiter = main_module.ClientRateLimiter()
+
+    assert limiter.try_acquire("client-a", 2, now=100.25) is None
+    assert limiter.try_acquire("client-a", 2, now=110.0) is None
+    assert limiter.try_acquire("client-a", 2, now=120.0) == 41
+    assert limiter.try_acquire("client-a", 2, now=160.25) is None
