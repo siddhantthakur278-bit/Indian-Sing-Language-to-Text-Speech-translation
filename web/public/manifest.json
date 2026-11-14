@@ -1,11 +1,11 @@
 {
-  "name": "Indian Sign Language to Speech Translator",
-  "short_name": "ISL Translator",
-  "description": "Real-time AI bridge translating ISL signs to Indian text and speech",
+  "name": "Indian Sign Language to Speech Neural Studio",
+  "short_name": "ISL Neural Studio",
+  "description": "Real-time AI bridge translating ISL signs to multilingual Indian text and speech with local on-device privacy",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B1324",
-  "theme_color": "#14213D",
+  "background_color": "#05070A",
+  "theme_color": "#D4AF37",
   "icons": [
     {
       "src": "/icon.svg",
