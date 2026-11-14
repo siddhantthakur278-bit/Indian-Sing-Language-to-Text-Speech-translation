@@ -116,3 +116,19 @@ Signer Signature: ___________________________ Date: ______________________
 Researcher Signature: _______________________ Date: ______________________
 ================================================================================
 ```
+
+---
+
+## 7. Character-Level Fingerspelling Dataset Pipeline
+
+For static character and digit recognition (A–Z and 1–9), the repository ingests the **Prathum Arikeri ISL Character Dataset**:
+
+* **Location:** `data/raw/fingerspelling/` (Excluded from Git per Privacy Contract)
+* **Structure:** 35 subdirectories (`A` through `Z` and `1` through `9`), containing 42,745 JPEG images.
+* **Manifest:** Evaluated and tracked in `data/fingerspelling_manifest.json`.
+* **Automated Setup Script:**
+  ```bash
+  bash scripts/setup_fingerspelling_dataset.sh
+  ```
+* **Processing Target:** Converted via dual-hand MediaPipe feature extraction into `data/processed/landmark_dataset_with_orientation.csv` (126-D wrist & MCP scaled feature vectors) for TensorFlow.js browser training.
+
