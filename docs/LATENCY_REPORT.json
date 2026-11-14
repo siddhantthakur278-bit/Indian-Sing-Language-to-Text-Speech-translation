@@ -1,0 +1,11 @@
+{
+  "iterations": 500,
+  "classes_count": 70,
+  "mean_latency_ms": 1.363,
+  "median_p50_ms": 1.25,
+  "p90_ms": 1.461,
+  "p95_ms": 1.904,
+  "p99_ms": 3.972,
+  "estimated_fps": 733.4,
+  "target_met": true
+}
