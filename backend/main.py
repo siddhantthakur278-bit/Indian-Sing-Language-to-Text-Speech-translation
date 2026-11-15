@@ -148,6 +148,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/", tags=["Root"])
+async def root():
+    """Root landing page showing backend service status and documentation links."""
+    return {
+        "service": "Indian Sign Language Translation API",
+        "status": "online",
+        "version": "1.0.0",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "endpoints": {
+            "health": "GET /health",
+            "docs": "GET /docs",
+            "sentence": "POST /api/sentence",
+            "tts": "GET /api/tts?text=...&lang=...",
+        },
+    }
+
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Report service liveness and configured backend feature modes."""
