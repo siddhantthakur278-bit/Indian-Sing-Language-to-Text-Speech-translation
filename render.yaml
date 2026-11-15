@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: isl-translator-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: gemini-flash-lite-latest
+      - key: HF_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://isl-translator-flax.vercel.app,http://localhost:3000
