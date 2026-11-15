@@ -1,0 +1,163 @@
+{
+  "format": "erd-studio",
+  "version": 1,
+  "name": "sanket_isl_translator",
+  "description": "Sanket Indian Sign Language (ISL) Database: Users, Translation Records (JSONB), Saved Phrases, Practice Sessions, Emergency Alerts.",
+  "dialect": "postgresql",
+  "tables": [
+    {
+      "id": "tbl_users",
+      "name": "users",
+      "label": "Signer & User Profiles",
+      "comment": "Registered signers, interpreters, and learners with accessibility preferences",
+      "color": "#8eb7ff",
+      "position": { "x": 60, "y": 80 },
+      "columns": [
+        { "id": "col_u_id", "name": "id", "type": "varchar(36)", "primaryKey": true, "label": "User ID (UUID/CUID)" },
+        { "id": "col_u_name", "name": "name", "type": "varchar(100)", "nullable": false, "default": "'Signer'", "label": "Full Name" },
+        { "id": "col_u_email", "name": "email", "type": "varchar(255)", "unique": true, "label": "Email Address" },
+        { "id": "col_u_avatar", "name": "avatar_url", "type": "text", "label": "Avatar URL" },
+        { "id": "col_u_role", "name": "role", "type": "varchar(50)", "nullable": false, "default": "'Signer'", "label": "Role (Signer/Interpreter/Learner)" },
+        { "id": "col_u_lang", "name": "preferred_lang", "type": "varchar(10)", "nullable": false, "default": "'hi'", "label": "Preferred Language Code" },
+        { "id": "col_u_speech", "name": "speech_rate", "type": "numeric(3,2)", "nullable": false, "default": "1.00", "label": "TTS Playback Speed" },
+        { "id": "col_u_auto", "name": "auto_speak", "type": "boolean", "nullable": false, "default": "true", "label": "Auto-speak TTS" },
+        { "id": "col_u_mode", "name": "sign_mode", "type": "varchar(20)", "nullable": false, "default": "'auto'", "label": "Sign Mode (auto/hold)" },
+        { "id": "col_u_theme", "name": "theme", "type": "varchar(50)", "nullable": false, "default": "'galaxy-gold'", "label": "UI Theme" },
+        { "id": "col_u_cat", "name": "created_at", "type": "timestamptz", "nullable": false, "default": "CURRENT_TIMESTAMP", "label": "Created At" },
+        { "id": "col_u_uat", "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "CURRENT_TIMESTAMP", "label": "Updated At" }
+      ],
+      "indexes": [
+        { "id": "idx_u_email", "name": "idx_users_email", "columns": [{ "columnId": "col_u_email" }] },
+        { "id": "idx_u_role", "name": "idx_users_role", "columns": [{ "columnId": "col_u_role" }] }
+      ]
+    },
+    {
+      "id": "tbl_translations",
+      "name": "translation_records",
+      "label": "Translation History",
+      "comment": "Chronological log of recognized ISL glosses and translated sentences",
+      "color": "#6fe3b4",
+      "position": { "x": 520, "y": 80 },
+      "columns": [
+        { "id": "col_tr_id", "name": "id", "type": "varchar(36)", "primaryKey": true, "label": "Record ID" },
+        { "id": "col_tr_uid", "name": "user_id", "type": "varchar(36)", "label": "User Reference" },
+        { "id": "col_tr_glosses", "name": "glosses", "type": "jsonb", "nullable": false, "label": "ISL Gloss Tokens Array" },
+        { "id": "col_tr_eng", "name": "english", "type": "text", "nullable": false, "label": "English Natural Sentence" },
+        { "id": "col_tr_trans", "name": "translated", "type": "text", "nullable": false, "label": "Target Language Translation" },
+        { "id": "col_tr_lang", "name": "lang", "type": "varchar(10)", "nullable": false, "default": "'hi'", "label": "Language Code" },
+        { "id": "col_tr_emerg", "name": "is_emergency", "type": "boolean", "nullable": false, "default": "false", "label": "Emergency Priority Flag" },
+        { "id": "col_tr_audio", "name": "audio_url", "type": "text", "label": "Generated Speech Audio URL" },
+        { "id": "col_tr_latency", "name": "inference_latency_ms", "type": "integer", "default": "0", "label": "Inference Latency (ms)" },
+        { "id": "col_tr_cat", "name": "created_at", "type": "timestamptz", "nullable": false, "default": "CURRENT_TIMESTAMP", "label": "Timestamp" }
+      ],
+      "indexes": [
+        { "id": "idx_tr_user_date", "name": "idx_translations_user_created", "columns": [{ "columnId": "col_tr_uid" }, { "columnId": "col_tr_cat", "order": "desc" }] },
+        { "id": "idx_tr_emergency", "name": "idx_translations_emergency", "columns": [{ "columnId": "col_tr_cat", "order": "desc" }] }
+      ]
+    },
+    {
+      "id": "tbl_saved_phrases",
+      "name": "saved_phrases",
+      "label": "Bookmarks & Shortcuts",
+      "comment": "Quick-access communication cards and hotkey triggers",
+      "color": "#ffe374",
+      "position": { "x": 60, "y": 520 },
+      "columns": [
+        { "id": "col_sp_id", "name": "id", "type": "varchar(36)", "primaryKey": true, "label": "Bookmark ID" },
+        { "id": "col_sp_uid", "name": "user_id", "type": "varchar(36)", "label": "Owner User ID" },
+        { "id": "col_sp_title", "name": "title", "type": "varchar(150)", "nullable": false, "label": "Display Title" },
+        { "id": "col_sp_glosses", "name": "glosses", "type": "jsonb", "nullable": false, "label": "Gloss Sequence" },
+        { "id": "col_sp_eng", "name": "english", "type": "text", "nullable": false, "label": "English Sentence" },
+        { "id": "col_sp_trans", "name": "translated", "type": "text", "nullable": false, "label": "Translated Text" },
+        { "id": "col_sp_catg", "name": "category", "type": "varchar(50)", "nullable": false, "default": "'General'", "label": "Category" },
+        { "id": "col_sp_short", "name": "shortcut", "type": "varchar(10)", "label": "Single-Key Hotkey" },
+        { "id": "col_sp_cat", "name": "created_at", "type": "timestamptz", "nullable": false, "default": "CURRENT_TIMESTAMP", "label": "Created At" },
+        { "id": "col_sp_uat", "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "CURRENT_TIMESTAMP", "label": "Updated At" }
+      ],
+      "indexes": [
+        { "id": "idx_sp_catg", "name": "idx_saved_phrases_user_category", "columns": [{ "columnId": "col_sp_uid" }, { "columnId": "col_sp_catg" }] }
+      ]
+    },
+    {
+      "id": "tbl_practice",
+      "name": "practice_sessions",
+      "label": "Practice & Drills",
+      "comment": "Fingerspelling and vocabulary drill scoring and accuracy history",
+      "color": "#d8b4fe",
+      "position": { "x": 520, "y": 520 },
+      "columns": [
+        { "id": "col_ps_id", "name": "id", "type": "varchar(36)", "primaryKey": true, "label": "Session ID" },
+        { "id": "col_ps_uid", "name": "user_id", "type": "varchar(36)", "label": "Signer User ID" },
+        { "id": "col_ps_signs", "name": "signs_recognized", "type": "integer", "nullable": false, "default": "0", "label": "Signs Completed" },
+        { "id": "col_ps_dur", "name": "duration_seconds", "type": "integer", "nullable": false, "default": "0", "label": "Duration (Seconds)" },
+        { "id": "col_ps_acc", "name": "accuracy", "type": "numeric(5,2)", "nullable": false, "default": "0.00", "label": "Accuracy Percentage" },
+        { "id": "col_ps_type", "name": "drill_type", "type": "varchar(50)", "nullable": false, "default": "'fingerspelling'", "label": "Drill Mode" },
+        { "id": "col_ps_cat", "name": "created_at", "type": "timestamptz", "nullable": false, "default": "CURRENT_TIMESTAMP", "label": "Completed At" }
+      ],
+      "indexes": [
+        { "id": "idx_ps_date", "name": "idx_practice_sessions_user_date", "columns": [{ "columnId": "col_ps_uid" }, { "columnId": "col_ps_cat", "order": "desc" }] }
+      ]
+    },
+    {
+      "id": "tbl_emergency",
+      "name": "emergency_alerts",
+      "label": "Emergency SOS Audit",
+      "comment": "Audit trail of urgent hospital/police/pain trigger dispatches",
+      "color": "#ff9f74",
+      "position": { "x": 960, "y": 80 },
+      "columns": [
+        { "id": "col_em_id", "name": "id", "type": "varchar(36)", "primaryKey": true, "label": "Alert ID" },
+        { "id": "col_em_uid", "name": "user_id", "type": "varchar(36)", "label": "Signer User ID" },
+        { "id": "col_em_trid", "name": "translation_id", "type": "varchar(36)", "label": "Triggering Translation ID" },
+        { "id": "col_em_type", "name": "alert_type", "type": "varchar(50)", "nullable": false, "label": "Emergency Type (HOSPITAL/POLICE/PAIN)" },
+        { "id": "col_em_trig", "name": "gloss_trigger", "type": "text", "nullable": false, "label": "Raw Trigger Glosses" },
+        { "id": "col_em_disp", "name": "dispatched_text", "type": "text", "nullable": false, "label": "Dispatched Distress Message" },
+        { "id": "col_em_stat", "name": "status", "type": "varchar(30)", "nullable": false, "default": "'TRIGGERED'", "label": "Alert Status" },
+        { "id": "col_em_ack", "name": "acknowledged_at", "type": "timestamptz", "label": "Acknowledged At" },
+        { "id": "col_em_cat", "name": "created_at", "type": "timestamptz", "nullable": false, "default": "CURRENT_TIMESTAMP", "label": "Dispatched At" }
+      ],
+      "indexes": [
+        { "id": "idx_em_stat", "name": "idx_emergency_alerts_status", "columns": [{ "columnId": "col_em_stat" }, { "columnId": "col_em_cat", "order": "desc" }] }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel_u_translations",
+      "name": "user_to_translations",
+      "source": { "tableId": "tbl_translations", "columnIds": ["col_tr_uid"], "cardinality": "zeroOrMany" },
+      "target": { "tableId": "tbl_users", "columnIds": ["col_u_id"], "cardinality": "one" },
+      "onDelete": "cascade"
+    },
+    {
+      "id": "rel_u_saved_phrases",
+      "name": "user_to_saved_phrases",
+      "source": { "tableId": "tbl_saved_phrases", "columnIds": ["col_sp_uid"], "cardinality": "zeroOrMany" },
+      "target": { "tableId": "tbl_users", "columnIds": ["col_u_id"], "cardinality": "one" },
+      "onDelete": "cascade"
+    },
+    {
+      "id": "rel_u_practice",
+      "name": "user_to_practice_sessions",
+      "source": { "tableId": "tbl_practice", "columnIds": ["col_ps_uid"], "cardinality": "zeroOrMany" },
+      "target": { "tableId": "tbl_users", "columnIds": ["col_u_id"], "cardinality": "one" },
+      "onDelete": "cascade"
+    },
+    {
+      "id": "rel_tr_emergency",
+      "name": "translation_to_emergency",
+      "source": { "tableId": "tbl_emergency", "columnIds": ["col_em_trid"], "cardinality": "zeroOrOne" },
+      "target": { "tableId": "tbl_translations", "columnIds": ["col_tr_id"], "cardinality": "one" },
+      "onDelete": "cascade"
+    }
+  ],
+  "notes": [
+    {
+      "id": "note_sanket_info",
+      "content": "**Sanket ISL Translator - PostgreSQL Architecture**\n- All real-time sign recognition happens on-device in the browser.\n- Gloss sequences are stored as `JSONB` with GIN indexing for sub-second keyword lookups.\n- Emergency phrases bypass LLM and dispatch instant verified SOS alerts.",
+      "position": { "x": 960, "y": 420 },
+      "size": { "width": 340, "height": 160 },
+      "color": "#ffe374"
+    }
+  ]
+}

@@ -59,3 +59,7 @@ coverage/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Temporary / Sample ERD Studio files
+sample.erd
+
